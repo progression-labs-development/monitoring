@@ -29,8 +29,8 @@ export function createSignoz(options: SignozOptions): SignozOutputs {
       { protocol: "tcp", fromPort: 4317, toPort: 4317, cidrBlocks: ["0.0.0.0/0"] },
       // OTLP HTTP
       { protocol: "tcp", fromPort: 4318, toPort: 4318, cidrBlocks: ["0.0.0.0/0"] },
-      // Frontend
-      { protocol: "tcp", fromPort: 3301, toPort: 3301, cidrBlocks: ["0.0.0.0/0"] },
+      // Grafana UI
+      { protocol: "tcp", fromPort: 3000, toPort: 3000, cidrBlocks: ["0.0.0.0/0"] },
       // Query service
       { protocol: "tcp", fromPort: 8080, toPort: 8080, cidrBlocks: ["0.0.0.0/0"] },
       // ClickHouse
@@ -117,17 +117,17 @@ export function createSignoz(options: SignozOptions): SignozOutputs {
     policyArn: "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy",
   });
 
-  // ALB target group for SigNoz frontend
+  // ALB target group for Grafana UI
   const targetGroup = new aws.lb.TargetGroup(`${name}-tg`, {
     name: `${name}-tg`,
-    port: 3301,
+    port: 3000,
     protocol: "HTTP",
     targetType: "ip",
     vpcId: vpc.vpcId,
     healthCheck: {
       enabled: true,
-      path: "/",
-      port: "3301",
+      path: "/api/health",
+      port: "3000",
       protocol: "HTTP",
       healthyThreshold: 2,
       unhealthyThreshold: 3,
@@ -137,10 +137,10 @@ export function createSignoz(options: SignozOptions): SignozOutputs {
     tags,
   });
 
-  // ALB listener rule for SigNoz
+  // ALB listener for Grafana UI
   const listener = new aws.lb.Listener(`${name}-listener`, {
     loadBalancerArn: alb.loadBalancer.arn,
-    port: 3301,
+    port: 3000,
     protocol: "HTTP",
     defaultActions: [
       {
@@ -250,7 +250,7 @@ export function createSignoz(options: SignozOptions): SignozOutputs {
   });
 
   return {
-    url: pulumi.interpolate`http://${alb.loadBalancer.dnsName}:3301`,
+    url: pulumi.interpolate`http://${alb.loadBalancer.dnsName}:3000`,
     otelEndpoint: pulumi.interpolate`http://${alb.loadBalancer.dnsName}:4318`,
   };
 }
