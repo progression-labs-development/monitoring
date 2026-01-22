@@ -50,6 +50,7 @@ jobs:
           export PATH="$HOME/.pulumi/bin:$PATH"
           pulumi login s3://pulumi-state-215629979895
           pulumi stack select dev --create
+          pulumi refresh --yes
           pulumi up --yes
         env:
           PULUMI_CONFIG_PASSPHRASE: ""
