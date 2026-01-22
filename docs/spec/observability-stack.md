@@ -21,17 +21,17 @@ ERRORS (GlitchTip)        ✅                    ✅
                      uncaught exceptions   uncaught exceptions
 
 
-LOGS (SigNoz)             ✅                   ⚠️ optional
-                     logger.info()         (usually skip)
+LOGS (SigNoz)             ✅                    ❌ skip
+                     logger.info()
                      logger.error()
 
 
-TRACES (SigNoz)           ✅                    ✅
-                     API request timing    page load, API calls
+TRACES (SigNoz)           ✅                    ❌ skip
+                     API request timing
 
 
-METRICS (SigNoz)          ✅                    ✅
-                     request count         web vitals
+METRICS (SigNoz)          ✅                    ❌ skip
+                     request count
                      response times
 ```
 
@@ -44,27 +44,27 @@ METRICS (SigNoz)          ✅                    ✅
 │  ┌─────────────────────────────┐  ┌─────────────────────────────┐   │
 │  │     Fastify Backend         │  │       React Frontend        │   │
 │  │                             │  │                             │   │
-│  │  ┌───────────┐ ┌─────────┐  │  │  ┌───────────┐ ┌─────────┐  │   │
-│  │  │ OTel SDK  │ │ Sentry  │  │  │  │ OTel SDK  │ │ Sentry  │  │   │
-│  │  │           │ │ SDK     │  │  │  │ (optional)│ │ SDK     │  │   │
-│  │  └─────┬─────┘ └────┬────┘  │  │  └─────┬─────┘ └────┬────┘  │   │
-│  └────────┼────────────┼───────┘  └────────┼────────────┼───────┘   │
-│           │            │                   │            │           │
-└───────────┼────────────┼───────────────────┼────────────┼───────────┘
-            │            │                   │            │
-            │ OTLP       │ Sentry Protocol   │ OTLP       │ Sentry
-            │ :4318      │ :8000             │ :4318      │ :8000
-            ▼            ▼                   ▼            ▼
+│  │  ┌───────────┐ ┌─────────┐  │  │            ┌─────────┐      │   │
+│  │  │ OTel SDK  │ │ Sentry  │  │  │            │ Sentry  │      │   │
+│  │  │           │ │ SDK     │  │  │            │ SDK     │      │   │
+│  │  └─────┬─────┘ └────┬────┘  │  │            └────┬────┘      │   │
+│  └────────┼────────────┼───────┘  └─────────────────┼───────────┘   │
+│           │            │                            │               │
+└───────────┼────────────┼────────────────────────────┼───────────────┘
+            │            │                            │
+            │ OTLP       │ Sentry Protocol            │ Sentry
+            │ :4318      │                            │
+            ▼            ▼                            ▼
 ┌─────────────────────────────┐   ┌─────────────────────────────────┐
 │          SigNoz             │   │          GlitchTip              │
+│       (ECS Fargate)         │   │       (ECS Fargate)             │
 │                             │   │                                 │
 │  ┌───────────────────────┐  │   │  ┌───────────────────────────┐  │
-│  │      ClickHouse       │  │   │  │       PostgreSQL          │  │
+│  │   ClickHouse (EBS)    │  │   │  │   RDS PostgreSQL          │  │
 │  │  (logs, traces,       │  │   │  │  (errors, users,          │  │
 │  │   metrics)            │  │   │  │   assignments)            │  │
 │  └───────────────────────┘  │   │  └───────────────────────────┘  │
 │                             │   │                                 │
-│  UI: http://localhost:3301  │   │  UI: http://localhost:8000      │
 └─────────────────────────────┘   └─────────────────────────────────┘
 ```
 
@@ -84,42 +84,112 @@ METRICS (SigNoz)          ✅                    ✅
 
 ## Deployment Method
 
-Docker Compose on a single server. Can migrate to Kubernetes later if needed.
+AWS ECS Fargate (serverless containers). No servers to manage.
 
-## Services to Deploy
+## Why ECS Fargate?
 
-### SigNoz Stack
+- **AWS Credits**: $100k credits make cost irrelevant
+- **No server management**: AWS handles patching, scaling, restarts
+- **AWS Integration**: Works with IAM, CloudWatch, RDS, etc.
+- **Partner alignment**: Learn patterns used by AWS clients
 
-| Service | Purpose | Port |
-|---------|---------|------|
-| signoz-otel-collector | Receives telemetry from apps | 4317 (gRPC), 4318 (HTTP) |
-| signoz-query-service | API for querying data | 8080 |
-| signoz-frontend | Web UI | 3301 |
-| clickhouse | Database | 9000 |
-| zookeeper | ClickHouse coordination | 2181 |
+## AWS Architecture
 
-### GlitchTip Stack
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              AWS Account                                     │
+│                                                                              │
+│  ┌────────────────────────────────────────────────────────────────────────┐ │
+│  │                           VPC                                          │ │
+│  │                                                                        │ │
+│  │   ┌──────────────────────────────────────────────────────────────┐    │ │
+│  │   │                    ECS Cluster                                │    │ │
+│  │   │                                                               │    │ │
+│  │   │  ┌─────────────────────┐    ┌─────────────────────┐          │    │ │
+│  │   │  │   SigNoz Service    │    │  GlitchTip Service  │          │    │ │
+│  │   │  │   (Fargate)         │    │  (Fargate)          │          │    │ │
+│  │   │  │                     │    │                     │          │    │ │
+│  │   │  │  - otel-collector   │    │  - web              │          │    │ │
+│  │   │  │  - query-service    │    │  - worker           │          │    │ │
+│  │   │  │  - frontend         │    │                     │          │    │ │
+│  │   │  │  - clickhouse       │    │                     │          │    │ │
+│  │   │  └──────────┬──────────┘    └──────────┬──────────┘          │    │ │
+│  │   │             │                          │                      │    │ │
+│  │   └─────────────┼──────────────────────────┼──────────────────────┘    │ │
+│  │                 │                          │                           │ │
+│  │   ┌─────────────▼──────────┐    ┌──────────▼───────────┐              │ │
+│  │   │   EBS Volume           │    │   RDS PostgreSQL     │              │ │
+│  │   │   (ClickHouse data)    │    │   (GlitchTip data)   │              │ │
+│  │   └────────────────────────┘    └──────────────────────┘              │ │
+│  │                                                                        │ │
+│  │   ┌────────────────────────┐                                          │ │
+│  │   │   ElastiCache Redis    │                                          │ │
+│  │   │   (GlitchTip queue)    │                                          │ │
+│  │   └────────────────────────┘                                          │ │
+│  │                                                                        │ │
+│  └────────────────────────────────────────────────────────────────────────┘ │
+│                                                                              │
+│  ┌────────────────────────────────────────────────────────────────────────┐ │
+│  │                    Application Load Balancer                           │ │
+│  │                                                                        │ │
+│  │   signoz.example.com:443 ────► SigNoz Frontend                        │ │
+│  │   otel.example.com:443 ──────► OTel Collector                         │ │
+│  │   errors.example.com:443 ───► GlitchTip                               │ │
+│  └────────────────────────────────────────────────────────────────────────┘ │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
 
-| Service | Purpose | Port |
-|---------|---------|------|
-| glitchtip-web | Web UI + API | 8000 |
-| glitchtip-worker | Background job processing | - |
-| postgresql | Database | 5432 |
-| redis | Job queue | 6379 |
+## AWS Services Used
 
-## Resource Requirements
+| Service | Purpose | Estimated Cost |
+|---------|---------|----------------|
+| **ECS Fargate** | Run containers | ~$200/month |
+| **RDS PostgreSQL** | GlitchTip database | ~$50/month |
+| **ElastiCache Redis** | GlitchTip job queue | ~$30/month |
+| **EBS** | ClickHouse persistent storage | ~$20/month |
+| **ALB** | Load balancer + SSL | ~$20/month |
+| **Route 53** | DNS | ~$1/month |
+| **ACM** | SSL certificates | Free |
+| **CloudWatch** | AWS logs (optional) | ~$10/month |
+| **Total** | | **~$330/month** |
 
-| Component | CPU | Memory | Storage |
-|-----------|-----|--------|---------|
-| SigNoz (total) | 4 cores | 8-12 GB | 50-100 GB SSD |
-| GlitchTip (total) | 1 core | 2 GB | 10 GB |
-| **Total** | 5 cores | 10-14 GB | 60-110 GB |
+All covered by AWS credits.
 
-Recommended: Single server with 8 cores, 16 GB RAM, 150 GB SSD.
+## ECS Task Definitions
 
-## Docker Compose Files
+### SigNoz Tasks
 
-TODO: Create `infra/docker-compose.signoz.yml` and `infra/docker-compose.glitchtip.yml`
+| Task | CPU | Memory | Notes |
+|------|-----|--------|-------|
+| signoz-otel-collector | 1 vCPU | 2 GB | Receives telemetry |
+| signoz-query-service | 0.5 vCPU | 1 GB | API layer |
+| signoz-frontend | 0.25 vCPU | 512 MB | Web UI |
+| clickhouse | 2 vCPU | 8 GB | Database (needs EBS) |
+
+### GlitchTip Tasks
+
+| Task | CPU | Memory | Notes |
+|------|-----|--------|-------|
+| glitchtip-web | 0.5 vCPU | 1 GB | Web UI + API |
+| glitchtip-worker | 0.5 vCPU | 1 GB | Background jobs |
+
+## Infrastructure as Code
+
+TODO: Create Terraform configuration in `infra/terraform/`
+
+```
+infra/
+└── terraform/
+    ├── main.tf           # Provider, backend
+    ├── vpc.tf            # VPC, subnets, security groups
+    ├── ecs.tf            # ECS cluster, services, tasks
+    ├── rds.tf            # PostgreSQL for GlitchTip
+    ├── elasticache.tf    # Redis for GlitchTip
+    ├── alb.tf            # Load balancer
+    ├── route53.tf        # DNS
+    └── variables.tf      # Configuration
+```
 
 ---
 
@@ -288,49 +358,6 @@ VITE_GLITCHTIP_DSN=http://key@glitchtip.yourdomain.com/1
 
 ---
 
-## Frontend Traces (Optional)
-
-Only add if you need frontend performance tracing (page loads, API call timing).
-
-```bash
-npm install @opentelemetry/api \
-  @opentelemetry/sdk-trace-web \
-  @opentelemetry/exporter-trace-otlp-http \
-  @opentelemetry/instrumentation-fetch \
-  @opentelemetry/instrumentation-document-load
-```
-
-```typescript
-// src/tracing.ts
-import { WebTracerProvider } from '@opentelemetry/sdk-trace-web';
-import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base';
-import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
-import { registerInstrumentations } from '@opentelemetry/instrumentation';
-import { FetchInstrumentation } from '@opentelemetry/instrumentation-fetch';
-import { DocumentLoadInstrumentation } from '@opentelemetry/instrumentation-document-load';
-
-const provider = new WebTracerProvider();
-
-provider.addSpanProcessor(
-  new BatchSpanProcessor(
-    new OTLPTraceExporter({
-      url: import.meta.env.VITE_OTEL_ENDPOINT || 'http://localhost:4318/v1/traces',
-    })
-  )
-);
-
-provider.register();
-
-registerInstrumentations({
-  instrumentations: [
-    new FetchInstrumentation(),
-    new DocumentLoadInstrumentation(),
-  ],
-});
-```
-
----
-
 # Summary
 
 ## What Gets Captured
@@ -339,24 +366,25 @@ registerInstrumentations({
 |--------|---------|----------|-------------|
 | Errors (exceptions) | Automatic | Automatic | GlitchTip |
 | Logs | Automatic (Fastify logger) | Skip | SigNoz |
-| Traces | Automatic (HTTP, DB) | Optional | SigNoz |
-| Metrics | Automatic | Optional | SigNoz |
+| Traces | Automatic (HTTP, DB) | Skip | SigNoz |
+| Metrics | Automatic | Skip | SigNoz |
 
-## URLs (Local Development)
+## URLs
 
-| Service | URL |
-|---------|-----|
-| SigNoz UI | http://localhost:3301 |
-| GlitchTip UI | http://localhost:8000 |
-| OTLP HTTP endpoint | http://localhost:4318 |
-| OTLP gRPC endpoint | http://localhost:4317 |
+| Service | Local Development | Production (AWS) |
+|---------|-------------------|------------------|
+| SigNoz UI | http://localhost:3301 | https://signoz.example.com |
+| GlitchTip UI | http://localhost:8000 | https://errors.example.com |
+| OTLP HTTP endpoint | http://localhost:4318 | https://otel.example.com |
+| OTLP gRPC endpoint | http://localhost:4317 | otel.example.com:4317 |
 
 ## Next Steps
 
-1. [ ] Set up infrastructure (Docker Compose files)
-2. [ ] Deploy SigNoz locally
-3. [ ] Deploy GlitchTip locally
-4. [ ] Integrate SDK into one backend service
-5. [ ] Integrate SDK into one frontend app
-6. [ ] Verify data flows to both dashboards
-7. [ ] Document production deployment
+1. [ ] Create Terraform configuration for AWS infrastructure
+2. [ ] Deploy SigNoz to ECS Fargate
+3. [ ] Deploy GlitchTip to ECS Fargate
+4. [ ] Configure DNS (Route 53) and SSL (ACM)
+5. [ ] Integrate SDK into one backend service
+6. [ ] Integrate SDK into one frontend app
+7. [ ] Verify data flows to both dashboards
+8. [ ] Set up local development environment (Docker Compose)
