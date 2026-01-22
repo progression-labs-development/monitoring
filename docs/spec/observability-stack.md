@@ -176,20 +176,22 @@ All covered by AWS credits.
 
 ## Infrastructure as Code
 
-TODO: Create Terraform configuration in `infra/terraform/`
+Pulumi (TypeScript) deployed via GitHub Actions to dev account only.
 
 ```
 infra/
-└── terraform/
-    ├── main.tf           # Provider, backend
-    ├── vpc.tf            # VPC, subnets, security groups
-    ├── ecs.tf            # ECS cluster, services, tasks
-    ├── rds.tf            # PostgreSQL for GlitchTip
-    ├── elasticache.tf    # Redis for GlitchTip
-    ├── alb.tf            # Load balancer
-    ├── route53.tf        # DNS
-    └── variables.tf      # Configuration
+└── pulumi/
+    ├── Pulumi.yaml           # Project config
+    ├── package.json          # Dependencies
+    ├── tsconfig.json         # TypeScript config
+    └── src/
+        ├── index.ts          # Main entry point
+        └── components/
+            ├── signoz.ts     # SigNoz ECS services
+            └── glitchtip.ts  # GlitchTip ECS services
 ```
+
+Deployment: Push to `main` triggers GitHub Actions → deploys to dev AWS account.
 
 ---
 

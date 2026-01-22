@@ -1,0 +1,6 @@
+name: monitoring
+runtime:
+  name: nodejs
+  options:
+    typescript: true
+description: Observability stack (SigNoz + GlitchTip) on AWS ECS Fargate
