@@ -60,7 +60,7 @@ export function createGlitchTip(name: string, options: GlitchTipOptions = {}): G
   // Common environment variables for both web and worker
   // Note: Using type assertion because environment is typed as Record<string, string>
   // but Pulumi handles Output<string> values at runtime when building task definitions
-  const commonEnv = {
+  const commonEnv: Record<string, string> = {
     SECRET_KEY: secretKey.result as unknown as string,
     DEFAULT_FROM_EMAIL: options.fromEmail || "noreply@example.com",
     EMAIL_URL: "consolemail://",
