@@ -82,6 +82,7 @@ git clone -b main https://github.com/SigNoz/signoz.git .
 cd deploy
 
 # Create override file for resource limits (optimized for t3.medium)
+# Note: SigNoz v0.108+ uses combined "signoz" service (UI+query) on port 8080
 cat > docker-compose.override.yml << 'OVERRIDE'
 services:
   clickhouse:
@@ -92,21 +93,13 @@ services:
         reservations:
           memory: 1G
 
-  query-service:
+  signoz:
     deploy:
       resources:
         limits:
-          memory: 512M
+          memory: 768M
         reservations:
-          memory: 256M
-
-  frontend:
-    deploy:
-      resources:
-        limits:
-          memory: 256M
-        reservations:
-          memory: 128M
+          memory: 384M
 
   otel-collector:
     deploy:
@@ -154,7 +147,7 @@ export function createSignoz(name: string, options: SignozOptions = {}): SignozO
     allowHttp: true,   // Port 80 (not used but may be useful)
     allowHttps: true,  // Port 443 (not used but may be useful)
     additionalPorts: [
-      { port: 3301, description: "SigNoz Frontend UI" },
+      { port: 8080, description: "SigNoz UI" },
       { port: 4317, description: "OTLP gRPC receiver" },
       { port: 4318, description: "OTLP HTTP receiver" },
     ],
@@ -162,7 +155,7 @@ export function createSignoz(name: string, options: SignozOptions = {}): SignozO
   });
 
   return {
-    url: pulumi.interpolate`http://${instance.publicIp}:3301`,
+    url: pulumi.interpolate`http://${instance.publicIp}:8080`,
     otlpHttpEndpoint: pulumi.interpolate`http://${instance.publicIp}:4318`,
     otlpGrpcEndpoint: pulumi.interpolate`${instance.publicIp}:4317`,
     publicIp: instance.publicIp,
