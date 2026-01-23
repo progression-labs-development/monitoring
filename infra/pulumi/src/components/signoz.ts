@@ -81,7 +81,7 @@ cd /opt/signoz
 git clone -b main https://github.com/SigNoz/signoz.git .
 cd deploy
 
-# Create override file for resource limits (optimized for t3.medium)
+# Create override file for resource limits and port exposure (optimized for t3.medium)
 # Note: SigNoz v0.108+ uses combined "signoz" service (UI+query) on port 8080
 cat > docker-compose.override.yml << 'OVERRIDE'
 services:
@@ -102,6 +102,9 @@ services:
           memory: 384M
 
   otel-collector:
+    ports:
+      - "0.0.0.0:4317:4317"  # OTLP gRPC - expose on all interfaces
+      - "0.0.0.0:4318:4318"  # OTLP HTTP - expose on all interfaces
     deploy:
       resources:
         limits:
