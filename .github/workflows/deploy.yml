@@ -56,3 +56,16 @@ jobs:
           PULUMI_CONFIG_PASSPHRASE: ""
           PULUMI_STACK: dev
           PULUMI_K8S_DELETE_UNREACHABLE: "true"
+
+      - name: Debug Security Groups
+        if: always()
+        run: |
+          echo "=== SigNoz Instance Security Groups ==="
+          INSTANCE_ID=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=monitoring-signoz-instance-dev" --query 'Reservations[0].Instances[0].InstanceId' --output text)
+          echo "Instance ID: $INSTANCE_ID"
+          SG_IDS=$(aws ec2 describe-instances --instance-ids $INSTANCE_ID --query 'Reservations[0].Instances[0].SecurityGroups[*].GroupId' --output text)
+          echo "Security Group IDs: $SG_IDS"
+          for SG_ID in $SG_IDS; do
+            echo "=== Rules for $SG_ID ==="
+            aws ec2 describe-security-groups --group-ids $SG_ID --query 'SecurityGroups[0].IpPermissions[*].{FromPort:FromPort,ToPort:ToPort,Protocol:IpProtocol,CIDR:IpRanges[0].CidrIp}' --output table
+          done
