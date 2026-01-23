@@ -366,10 +366,11 @@ export function createSignoz(options: SignozOptions): SignozOutputs {
         "portMappings": [
           { "containerPort": 8080, "hostPort": 8080, "protocol": "tcp" }
         ],
+        "dnsSearchDomains": ["signoz.local"],
         "environment": [
           { "name": "SIGNOZ_LOCAL_DB_PATH", "value": "/var/lib/signoz/signoz.db" },
           { "name": "STORAGE", "value": "clickhouse" },
-          { "name": "ClickHouseUrl", "value": "tcp://clickhouse.signoz.local:9000" },
+          { "name": "ClickHouseUrl", "value": "tcp://clickhouse:9000" },
           { "name": "TELEMETRY_ENABLED", "value": "false" },
           { "name": "GODEBUG", "value": "netdns=go" }
         ],
@@ -397,9 +398,9 @@ export function createSignoz(options: SignozOptions): SignozOutputs {
           { "containerPort": 4317, "hostPort": 4317, "protocol": "tcp" },
           { "containerPort": 4318, "hostPort": 4318, "protocol": "tcp" }
         ],
+        "dnsSearchDomains": ["signoz.local"],
         "environment": [
           { "name": "OTEL_RESOURCE_ATTRIBUTES", "value": "host.name=signoz-otel-collector" },
-          { "name": "ClickHouseUrl", "value": "tcp://clickhouse.signoz.local:9000" },
           { "name": "GODEBUG", "value": "netdns=go" }
         ],
         "healthCheck": {
