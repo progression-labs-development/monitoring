@@ -56,11 +56,3 @@ jobs:
           PULUMI_CONFIG_PASSPHRASE: ""
           PULUMI_STACK: dev
           PULUMI_K8S_DELETE_UNREACHABLE: "true"
-
-      - name: Debug Security Groups
-        if: always()
-        run: |
-          echo "=== SigNoz Security Group Rules ==="
-          aws ec2 describe-security-groups --group-names "monitoring-signoz-instance-dev" --query 'SecurityGroups[0].IpPermissions[*].{FromPort:FromPort,ToPort:ToPort,Protocol:IpProtocol,CIDR:IpRanges[0].CidrIp}' --output table || echo "Failed to query by name"
-          echo "=== All Security Groups with 'signoz' in name ==="
-          aws ec2 describe-security-groups --filters "Name=group-name,Values=*signoz*" --query 'SecurityGroups[*].{Name:GroupName,ID:GroupId}' --output table
