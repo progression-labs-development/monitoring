@@ -1,0 +1,57 @@
+name: Destroy
+
+on:
+  push:
+    tags:
+      - 'destroy'
+      - 'destroy-*'
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: eu-west-2
+
+jobs:
+  destroy-dev:
+    name: Destroy Dev Resources
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra/pulumi
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: infra/pulumi/pnpm-lock.yaml
+
+      - run: pnpm install
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::215629979895:role/github-actions-pulumi
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Install Pulumi
+        run: curl -fsSL https://get.pulumi.com | sh && echo "$HOME/.pulumi/bin" >> $GITHUB_PATH
+
+      - name: Destroy All Resources
+        run: |
+          export PATH="$HOME/.pulumi/bin:$PATH"
+          pulumi login s3://pulumi-state-215629979895
+          pulumi stack select dev --create
+          pulumi refresh --yes
+          pulumi destroy --yes
+        env:
+          PULUMI_CONFIG_PASSPHRASE: ""
+          PULUMI_STACK: dev
