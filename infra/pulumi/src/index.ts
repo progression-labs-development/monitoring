@@ -21,7 +21,7 @@ defineConfig({
 
 const signoz = createSignoz("signoz", {
   size: "medium",  // t3.medium: 2 vCPU, 4GB RAM
-  sshKey: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILq6s32DB2p4g3TC3EgrwI2BMtOOizJUk+SSGscNMn3I",
+  sshKey: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINYsfNIOPB8jUzyOp4ExBoiOD78gXh1KljmLotR9J3eY",
 });
 
 // =============================================================================
