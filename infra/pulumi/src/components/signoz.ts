@@ -18,24 +18,52 @@ export interface SignozOutputs {
 export function createSignoz(options: SignozOptions): SignozOutputs {
   const { cluster, vpc, alb, tags, stack } = options;
   const name = `signoz-${stack}`;
+  const region = aws.config.region || "eu-west-2";
+
+  // ===========================================
+  // Cloud Map namespace for service discovery
+  // ===========================================
+  const namespace = new aws.servicediscovery.PrivateDnsNamespace(`${name}-namespace`, {
+    name: "signoz.local",
+    vpc: vpc.vpcId,
+    tags: { ...tags, Name: `${name}-namespace` },
+  });
+
+  // ===========================================
+  // Security Groups
+  // ===========================================
+
+  // Security group for ClickHouse (internal only)
+  const clickhouseSecurityGroup = new aws.ec2.SecurityGroup(`${name}-clickhouse-sg`, {
+    name: `${name}-clickhouse-sg`,
+    vpcId: vpc.vpcId,
+    description: "Security group for ClickHouse",
+    ingress: [
+      // ClickHouse HTTP
+      { protocol: "tcp", fromPort: 8123, toPort: 8123, cidrBlocks: ["10.0.0.0/16"] },
+      // ClickHouse native TCP
+      { protocol: "tcp", fromPort: 9000, toPort: 9000, cidrBlocks: ["10.0.0.0/16"] },
+      // EFS/NFS
+      { protocol: "tcp", fromPort: 2049, toPort: 2049, cidrBlocks: ["10.0.0.0/16"] },
+    ],
+    egress: [
+      { protocol: "-1", fromPort: 0, toPort: 0, cidrBlocks: ["0.0.0.0/0"] },
+    ],
+    tags: { ...tags, Name: `${name}-clickhouse-sg` },
+  });
 
   // Security group for SigNoz services
-  const securityGroup = new aws.ec2.SecurityGroup(`${name}-sg`, {
+  const signozSecurityGroup = new aws.ec2.SecurityGroup(`${name}-sg`, {
     name: `${name}-sg`,
     vpcId: vpc.vpcId,
     description: "Security group for SigNoz services",
     ingress: [
+      // SigNoz UI/API
+      { protocol: "tcp", fromPort: 8080, toPort: 8080, cidrBlocks: ["0.0.0.0/0"] },
       // OTLP gRPC
       { protocol: "tcp", fromPort: 4317, toPort: 4317, cidrBlocks: ["0.0.0.0/0"] },
       // OTLP HTTP
       { protocol: "tcp", fromPort: 4318, toPort: 4318, cidrBlocks: ["0.0.0.0/0"] },
-      // Grafana UI
-      { protocol: "tcp", fromPort: 3000, toPort: 3000, cidrBlocks: ["0.0.0.0/0"] },
-      // Query service
-      { protocol: "tcp", fromPort: 8080, toPort: 8080, cidrBlocks: ["0.0.0.0/0"] },
-      // ClickHouse
-      { protocol: "tcp", fromPort: 9000, toPort: 9000, cidrBlocks: ["10.0.0.0/16"] },
-      { protocol: "tcp", fromPort: 8123, toPort: 8123, cidrBlocks: ["10.0.0.0/16"] },
     ],
     egress: [
       { protocol: "-1", fromPort: 0, toPort: 0, cidrBlocks: ["0.0.0.0/0"] },
@@ -43,7 +71,9 @@ export function createSignoz(options: SignozOptions): SignozOutputs {
     tags: { ...tags, Name: `${name}-sg` },
   });
 
+  // ===========================================
   // EFS for ClickHouse persistent storage
+  // ===========================================
   const efsFileSystem = new aws.efs.FileSystem(`${name}-efs`, {
     encrypted: true,
     performanceMode: "generalPurpose",
@@ -51,19 +81,19 @@ export function createSignoz(options: SignozOptions): SignozOutputs {
     tags: { ...tags, Name: `${name}-clickhouse-data` },
   });
 
-  // EFS mount targets (one per AZ)
+  // EFS mount targets (one per AZ) - use private subnets
   const mountTargets = vpc.privateSubnetIds.apply((subnetIds) =>
     subnetIds.map(
       (subnetId, i) =>
         new aws.efs.MountTarget(`${name}-efs-mount-${i}`, {
           fileSystemId: efsFileSystem.id,
           subnetId,
-          securityGroups: [securityGroup.id],
+          securityGroups: [clickhouseSecurityGroup.id],
         })
     )
   );
 
-  // EFS access point for ClickHouse
+  // EFS access point for ClickHouse (uid/gid 101 is clickhouse user)
   const accessPoint = new aws.efs.AccessPoint(`${name}-efs-ap`, {
     fileSystemId: efsFileSystem.id,
     posixUser: { uid: 101, gid: 101 },
@@ -74,14 +104,24 @@ export function createSignoz(options: SignozOptions): SignozOutputs {
     tags: { ...tags, Name: `${name}-clickhouse-ap` },
   });
 
-  // CloudWatch log group
-  const logGroup = new aws.cloudwatch.LogGroup(`${name}-logs`, {
+  // ===========================================
+  // CloudWatch log groups
+  // ===========================================
+  const clickhouseLogGroup = new aws.cloudwatch.LogGroup(`${name}-clickhouse-logs`, {
+    name: `/ecs/${name}-clickhouse`,
+    retentionInDays: 30,
+    tags,
+  });
+
+  const signozLogGroup = new aws.cloudwatch.LogGroup(`${name}-logs`, {
     name: `/ecs/${name}`,
     retentionInDays: 30,
     tags,
   });
 
-  // IAM role for ECS tasks
+  // ===========================================
+  // IAM Roles
+  // ===========================================
   const taskRole = new aws.iam.Role(`${name}-task-role`, {
     name: `${name}-task-role`,
     assumeRolePolicy: JSON.stringify({
@@ -95,6 +135,28 @@ export function createSignoz(options: SignozOptions): SignozOutputs {
       ],
     }),
     tags,
+  });
+
+  // EFS policy for task role
+  const efsPolicy = new aws.iam.RolePolicy(`${name}-efs-policy`, {
+    role: taskRole.name,
+    policy: pulumi.interpolate`{
+      "Version": "2012-10-17",
+      "Statement": [{
+        "Effect": "Allow",
+        "Action": [
+          "elasticfilesystem:ClientMount",
+          "elasticfilesystem:ClientWrite",
+          "elasticfilesystem:ClientRootAccess"
+        ],
+        "Resource": "${efsFileSystem.arn}",
+        "Condition": {
+          "StringEquals": {
+            "elasticfilesystem:AccessPointArn": "${accessPoint.arn}"
+          }
+        }
+      }]
+    }`,
   });
 
   const executionRole = new aws.iam.Role(`${name}-execution-role`, {
@@ -117,41 +179,143 @@ export function createSignoz(options: SignozOptions): SignozOutputs {
     policyArn: "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy",
   });
 
-  // ALB target group for Grafana UI
-  const targetGroup = new aws.lb.TargetGroup(`${name}-tg`, {
-    name: `${name}-tg`,
-    port: 3000,
+  // ===========================================
+  // ClickHouse Service
+  // ===========================================
+
+  // Cloud Map service for ClickHouse
+  const clickhouseServiceDiscovery = new aws.servicediscovery.Service(`${name}-clickhouse-sd`, {
+    name: "clickhouse",
+    namespaceId: namespace.id,
+    dnsConfig: {
+      namespaceId: namespace.id,
+      dnsRecords: [{ ttl: 10, type: "A" }],
+      routingPolicy: "MULTIVALUE",
+    },
+    healthCheckCustomConfig: { failureThreshold: 1 },
+    tags,
+  });
+
+  // ClickHouse task definition
+  const clickhouseTaskDefinition = new aws.ecs.TaskDefinition(`${name}-clickhouse-task`, {
+    family: `${name}-clickhouse`,
+    networkMode: "awsvpc",
+    requiresCompatibilities: ["FARGATE"],
+    cpu: "1024",
+    memory: "2048",
+    executionRoleArn: executionRole.arn,
+    taskRoleArn: taskRole.arn,
+    volumes: [{
+      name: "clickhouse-data",
+      efsVolumeConfiguration: {
+        fileSystemId: efsFileSystem.id,
+        transitEncryption: "ENABLED",
+        authorizationConfig: {
+          accessPointId: accessPoint.id,
+          iam: "ENABLED",
+        },
+      },
+    }],
+    containerDefinitions: pulumi.interpolate`[
+      {
+        "name": "clickhouse",
+        "image": "clickhouse/clickhouse-server:24.1-alpine",
+        "essential": true,
+        "portMappings": [
+          { "containerPort": 8123, "hostPort": 8123, "protocol": "tcp" },
+          { "containerPort": 9000, "hostPort": 9000, "protocol": "tcp" }
+        ],
+        "mountPoints": [{
+          "sourceVolume": "clickhouse-data",
+          "containerPath": "/var/lib/clickhouse",
+          "readOnly": false
+        }],
+        "environment": [
+          { "name": "CLICKHOUSE_DB", "value": "signoz" },
+          { "name": "CLICKHOUSE_USER", "value": "default" },
+          { "name": "CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT", "value": "1" }
+        ],
+        "ulimits": [
+          { "name": "nofile", "softLimit": 262144, "hardLimit": 262144 }
+        ],
+        "healthCheck": {
+          "command": ["CMD-SHELL", "wget --spider -q localhost:8123/ping || exit 1"],
+          "interval": 30,
+          "timeout": 5,
+          "retries": 3,
+          "startPeriod": 60
+        },
+        "logConfiguration": {
+          "logDriver": "awslogs",
+          "options": {
+            "awslogs-group": "/ecs/${name}-clickhouse",
+            "awslogs-region": "${region}",
+            "awslogs-stream-prefix": "clickhouse"
+          }
+        }
+      }
+    ]`,
+    tags,
+  });
+
+  // ClickHouse ECS Service
+  const clickhouseService = new aws.ecs.Service(`${name}-clickhouse-service`, {
+    name: `${name}-clickhouse`,
+    cluster: cluster.arn,
+    taskDefinition: clickhouseTaskDefinition.arn,
+    desiredCount: 1,
+    launchType: "FARGATE",
+    platformVersion: "1.4.0",
+    networkConfiguration: {
+      assignPublicIp: false,
+      subnets: vpc.privateSubnetIds,
+      securityGroups: [clickhouseSecurityGroup.id],
+    },
+    serviceRegistries: {
+      registryArn: clickhouseServiceDiscovery.arn,
+    },
+    tags,
+  });
+
+  // ===========================================
+  // SigNoz Service (Frontend + Query + OTel)
+  // ===========================================
+
+  // ALB target group for SigNoz UI
+  const uiTargetGroup = new aws.lb.TargetGroup(`${name}-ui-tg`, {
+    name: `${name}-ui-tg`,
+    port: 8080,
     protocol: "HTTP",
     targetType: "ip",
     vpcId: vpc.vpcId,
     healthCheck: {
       enabled: true,
-      path: "/api/health",
-      port: "3000",
+      path: "/api/v1/health",
+      port: "8080",
       protocol: "HTTP",
       healthyThreshold: 2,
-      unhealthyThreshold: 3,
-      timeout: 5,
+      unhealthyThreshold: 5,
+      timeout: 10,
       interval: 30,
     },
     tags,
   });
 
-  // ALB listener for Grafana UI
-  const listener = new aws.lb.Listener(`${name}-listener`, {
+  // ALB listener for SigNoz UI (port 3301)
+  const uiListener = new aws.lb.Listener(`${name}-ui-listener`, {
     loadBalancerArn: alb.loadBalancer.arn,
-    port: 3000,
+    port: 3301,
     protocol: "HTTP",
     defaultActions: [
       {
         type: "forward",
-        targetGroupArn: targetGroup.arn,
+        targetGroupArn: uiTargetGroup.arn,
       },
     ],
     tags,
   });
 
-  // OTEL target group
+  // OTEL HTTP target group
   const otelTargetGroup = new aws.lb.TargetGroup(`${name}-otel-tg`, {
     name: `${name}-otel-tg`,
     port: 4318,
@@ -171,7 +335,7 @@ export function createSignoz(options: SignozOptions): SignozOutputs {
     tags,
   });
 
-  // OTEL listener
+  // OTEL HTTP listener
   const otelListener = new aws.lb.Listener(`${name}-otel-listener`, {
     loadBalancerArn: alb.loadBalancer.arn,
     port: 4318,
@@ -185,72 +349,108 @@ export function createSignoz(options: SignozOptions): SignozOutputs {
     tags,
   });
 
-  // Task definition for SigNoz (using official otel-lgtm image for simplicity)
-  const taskDefinition = new aws.ecs.TaskDefinition(`${name}-task`, {
+  // SigNoz task definition with two containers
+  const signozTaskDefinition = new aws.ecs.TaskDefinition(`${name}-task`, {
     family: name,
     networkMode: "awsvpc",
     requiresCompatibilities: ["FARGATE"],
-    cpu: "2048",
-    memory: "8192",
+    cpu: "1024",
+    memory: "2048",
     executionRoleArn: executionRole.arn,
     taskRoleArn: taskRole.arn,
-    containerDefinitions: JSON.stringify([
+    containerDefinitions: pulumi.interpolate`[
       {
-        name: "otel-lgtm",
-        image: "grafana/otel-lgtm:latest",
-        essential: true,
-        portMappings: [
-          { containerPort: 3000, hostPort: 3000, protocol: "tcp" }, // Grafana
-          { containerPort: 4317, hostPort: 4317, protocol: "tcp" }, // OTLP gRPC
-          { containerPort: 4318, hostPort: 4318, protocol: "tcp" }, // OTLP HTTP
-          { containerPort: 3100, hostPort: 3100, protocol: "tcp" }, // Loki
-          { containerPort: 9090, hostPort: 9090, protocol: "tcp" }, // Prometheus
-          { containerPort: 3200, hostPort: 3200, protocol: "tcp" }, // Tempo
+        "name": "signoz",
+        "image": "signoz/signoz:v0.55.0",
+        "essential": true,
+        "portMappings": [
+          { "containerPort": 8080, "hostPort": 8080, "protocol": "tcp" }
         ],
-        environment: [
-          { name: "GF_SECURITY_ADMIN_PASSWORD", value: "admin" },
+        "environment": [
+          { "name": "SIGNOZ_LOCAL_DB_PATH", "value": "/var/lib/signoz/signoz.db" },
+          { "name": "STORAGE", "value": "clickhouse" },
+          { "name": "ClickHouseUrl", "value": "tcp://clickhouse.signoz.local:9000" },
+          { "name": "TELEMETRY_ENABLED", "value": "false" },
+          { "name": "GODEBUG", "value": "netdns=go" }
         ],
-        logConfiguration: {
-          logDriver: "awslogs",
-          options: {
-            "awslogs-group": `/ecs/${name}`,
-            "awslogs-region": aws.config.region,
-            "awslogs-stream-prefix": "otel-lgtm",
-          },
+        "healthCheck": {
+          "command": ["CMD-SHELL", "wget --spider -q localhost:8080/api/v1/health || exit 1"],
+          "interval": 30,
+          "timeout": 10,
+          "retries": 5,
+          "startPeriod": 120
         },
+        "logConfiguration": {
+          "logDriver": "awslogs",
+          "options": {
+            "awslogs-group": "/ecs/${name}",
+            "awslogs-region": "${region}",
+            "awslogs-stream-prefix": "signoz"
+          }
+        }
       },
-    ]),
+      {
+        "name": "otel-collector",
+        "image": "signoz/signoz-otel-collector:v0.111.16",
+        "essential": true,
+        "portMappings": [
+          { "containerPort": 4317, "hostPort": 4317, "protocol": "tcp" },
+          { "containerPort": 4318, "hostPort": 4318, "protocol": "tcp" }
+        ],
+        "environment": [
+          { "name": "OTEL_RESOURCE_ATTRIBUTES", "value": "host.name=signoz-otel-collector" },
+          { "name": "ClickHouseUrl", "value": "tcp://clickhouse.signoz.local:9000" },
+          { "name": "GODEBUG", "value": "netdns=go" }
+        ],
+        "healthCheck": {
+          "command": ["CMD-SHELL", "wget --spider -q localhost:4318/ || exit 1"],
+          "interval": 30,
+          "timeout": 5,
+          "retries": 3,
+          "startPeriod": 60
+        },
+        "logConfiguration": {
+          "logDriver": "awslogs",
+          "options": {
+            "awslogs-group": "/ecs/${name}",
+            "awslogs-region": "${region}",
+            "awslogs-stream-prefix": "otel-collector"
+          }
+        }
+      }
+    ]`,
     tags,
   });
 
-  // Note: Using grafana/otel-lgtm for simplicity instead of full SigNoz stack
-  // This provides Grafana + Loki + Tempo + Prometheus in one container
-  // For production, consider deploying full SigNoz with ClickHouse
-
-  // ECS Service
-  const service = new aws.ecs.Service(`${name}-service`, {
+  // SigNoz ECS Service
+  const signozService = new aws.ecs.Service(`${name}-service`, {
     name,
     cluster: cluster.arn,
-    taskDefinition: taskDefinition.arn,
+    taskDefinition: signozTaskDefinition.arn,
     desiredCount: 1,
     launchType: "FARGATE",
     networkConfiguration: {
       assignPublicIp: true,
       subnets: vpc.publicSubnetIds,
-      securityGroups: [securityGroup.id],
+      securityGroups: [signozSecurityGroup.id],
     },
     loadBalancers: [
       {
-        targetGroupArn: targetGroup.arn,
-        containerName: "otel-lgtm",
-        containerPort: 3000,
+        targetGroupArn: uiTargetGroup.arn,
+        containerName: "signoz",
+        containerPort: 8080,
+      },
+      {
+        targetGroupArn: otelTargetGroup.arn,
+        containerName: "otel-collector",
+        containerPort: 4318,
       },
     ],
     tags,
-  });
+  }, { dependsOn: [clickhouseService] });
 
   return {
-    url: pulumi.interpolate`http://${alb.loadBalancer.dnsName}:3000`,
+    url: pulumi.interpolate`http://${alb.loadBalancer.dnsName}:3301`,
     otelEndpoint: pulumi.interpolate`http://${alb.loadBalancer.dnsName}:4318`,
   };
 }
