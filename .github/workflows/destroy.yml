@@ -125,28 +125,32 @@ jobs:
       - name: Delete EFS Filesystems
         run: |
           echo "Deleting EFS filesystems..."
-          for fs in $(aws efs describe-file-systems --query 'FileSystems[*].[FileSystemId,Name]' --output text 2>/dev/null || echo ""); do
-            fs_id=$(echo "$fs" | cut -f1)
-            fs_name=$(echo "$fs" | cut -f2)
+          aws efs describe-file-systems --query 'FileSystems[*].[FileSystemId,Name]' --output text 2>/dev/null | while IFS=$'\t' read -r fs_id fs_name; do
             if [[ "$fs_name" == *"signoz"* ]] || [[ "$fs_name" == *"monitoring"* ]]; then
               echo "Deleting EFS filesystem: $fs_id ($fs_name)"
 
               # Delete mount targets first
               for mt in $(aws efs describe-mount-targets --file-system-id "$fs_id" --query 'MountTargets[*].MountTargetId' --output text 2>/dev/null || echo ""); do
-                echo "  Deleting mount target: $mt"
-                aws efs delete-mount-target --mount-target-id "$mt" || true
+                if [ -n "$mt" ]; then
+                  echo "  Deleting mount target: $mt"
+                  aws efs delete-mount-target --mount-target-id "$mt" || true
+                fi
               done
 
               # Wait for mount targets to be deleted
-              sleep 30
+              echo "  Waiting for mount targets to be deleted..."
+              sleep 60
 
               # Delete access points
               for ap in $(aws efs describe-access-points --file-system-id "$fs_id" --query 'AccessPoints[*].AccessPointId' --output text 2>/dev/null || echo ""); do
-                echo "  Deleting access point: $ap"
-                aws efs delete-access-point --access-point-id "$ap" || true
+                if [ -n "$ap" ]; then
+                  echo "  Deleting access point: $ap"
+                  aws efs delete-access-point --access-point-id "$ap" || true
+                fi
               done
 
               # Delete the filesystem
+              echo "  Deleting filesystem..."
               aws efs delete-file-system --file-system-id "$fs_id" || true
             fi
           done
