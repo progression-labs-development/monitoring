@@ -71,7 +71,7 @@ export function createGlitchTip(name: string, options: GlitchTipOptions = {}): G
   // Note: The link feature auto-injects DATABASE_URL from db and REDIS_URL from redis
   const web = createContainer(`${name}-web`, {
     image: "glitchtip/glitchtip:latest",
-    port: 8000,
+    port: 8080,  // GlitchTip runs on port 8080 by default
     size: "medium",  // 0.5 vCPU, 1GB - GlitchTip needs a bit more resources
     replicas: 1,
     environment: commonEnv,
@@ -83,7 +83,7 @@ export function createGlitchTip(name: string, options: GlitchTipOptions = {}): G
   // The worker runs Celery for background tasks
   const worker = createContainer(`${name}-worker`, {
     image: "glitchtip/glitchtip:latest",
-    port: 8000,  // Required for health check but not used for traffic
+    port: 8080,  // GlitchTip runs on port 8080 by default
     size: "small",  // 0.25 vCPU, 0.5GB - worker doesn't need as much
     replicas: 1,
     environment: {
