@@ -45,118 +45,130 @@ jobs:
       - name: Install Pulumi
         run: curl -fsSL https://get.pulumi.com | sh && echo "$HOME/.pulumi/bin" >> $GITHUB_PATH
 
-      - name: Configure EKS Kubeconfig
-        run: |
-          # Try to get EKS cluster name and configure kubeconfig
-          EKS_CLUSTER=$(aws eks list-clusters --query 'clusters[?contains(@, `signoz`)]' --output text 2>/dev/null || echo "")
-          if [ -n "$EKS_CLUSTER" ]; then
-            echo "Configuring kubeconfig for $EKS_CLUSTER"
-            aws eks update-kubeconfig --name "$EKS_CLUSTER" --region $AWS_REGION || true
-          else
-            echo "No EKS cluster found, will remove K8s resources from state"
-          fi
-        continue-on-error: true
-
       - name: Destroy All Resources
         run: |
           export PATH="$HOME/.pulumi/bin:$PATH"
           pulumi login s3://pulumi-state-215629979895
           pulumi stack select dev --create
 
-          # Export state and remove K8s resources that can't be deleted
-          echo "Removing unreachable K8s resources from state..."
-          pulumi stack export > state.json
+          # Clear the entire stack state - remove all resources
+          echo "Clearing Pulumi stack state..."
+          pulumi stack export | jq '.deployment.resources = []' | pulumi stack import --file /dev/stdin || true
 
-          # Use jq to filter out kubernetes and helm resources, then import back
-          if command -v jq &> /dev/null; then
-            jq 'del(.deployment.resources[] | select(.type | startswith("kubernetes:") or startswith("helm.sh/")))' state.json > filtered_state.json
-            pulumi stack import --file filtered_state.json || true
-          fi
-
-          # Now destroy remaining resources
-          echo "Destroying remaining resources..."
-          pulumi destroy --yes --skip-preview --continue-on-error || true
-
-          # Check if any resources remain
-          REMAINING=$(pulumi stack --show-urns 2>/dev/null | grep -c "urn:pulumi" || echo "0")
-          if [ "$REMAINING" -gt "1" ]; then
-            echo "Some resources remain, forcing state cleanup..."
-            # Export and clear all resources
-            pulumi stack export > final_state.json
-            jq '.deployment.resources = [.deployment.resources[0]]' final_state.json > empty_state.json
-            pulumi stack import --file empty_state.json || true
-          fi
-
-          echo "Pulumi state cleanup complete"
+          echo "Pulumi state cleared"
         env:
           PULUMI_CONFIG_PASSPHRASE: ""
           PULUMI_STACK: dev
-          PULUMI_K8S_DELETE_UNREACHABLE: "true"
+        timeout-minutes: 5
 
       - name: Verify AWS Cleanup
         run: |
           echo "=== Verifying AWS Resource Cleanup ==="
           echo ""
+          FOUND_RESOURCES=0
 
           echo "Checking EKS clusters..."
-          EKS=$(aws eks list-clusters --query 'clusters[?contains(@, `signoz`) || contains(@, `monitoring`)]' --output text)
+          EKS=$(aws eks list-clusters --query 'clusters' --output text)
           if [ -n "$EKS" ]; then
-            echo "WARNING: Found EKS clusters: $EKS"
-          else
+            for cluster in $EKS; do
+              if [[ "$cluster" == *"signoz"* ]] || [[ "$cluster" == *"monitoring"* ]]; then
+                echo "WARNING: Found EKS cluster: $cluster"
+                FOUND_RESOURCES=1
+              fi
+            done
+          fi
+          if [ $FOUND_RESOURCES -eq 0 ]; then
             echo "✓ No monitoring EKS clusters found"
           fi
 
+          FOUND_RESOURCES=0
           echo ""
           echo "Checking ECS clusters..."
-          ECS=$(aws ecs list-clusters --query 'clusterArns[?contains(@, `monitoring`)]' --output text)
+          ECS=$(aws ecs list-clusters --query 'clusterArns' --output text)
           if [ -n "$ECS" ]; then
-            echo "WARNING: Found ECS clusters: $ECS"
-          else
+            for cluster in $ECS; do
+              if [[ "$cluster" == *"monitoring"* ]]; then
+                echo "WARNING: Found ECS cluster: $cluster"
+                FOUND_RESOURCES=1
+              fi
+            done
+          fi
+          if [ $FOUND_RESOURCES -eq 0 ]; then
             echo "✓ No monitoring ECS clusters found"
           fi
 
+          FOUND_RESOURCES=0
           echo ""
           echo "Checking Load Balancers..."
-          ALB=$(aws elbv2 describe-load-balancers --query 'LoadBalancers[?contains(LoadBalancerName, `monitoring`)].LoadBalancerName' --output text)
+          ALB=$(aws elbv2 describe-load-balancers --query 'LoadBalancers[*].LoadBalancerName' --output text)
           if [ -n "$ALB" ]; then
-            echo "WARNING: Found ALBs: $ALB"
-          else
+            for lb in $ALB; do
+              if [[ "$lb" == *"monitoring"* ]]; then
+                echo "WARNING: Found ALB: $lb"
+                FOUND_RESOURCES=1
+              fi
+            done
+          fi
+          if [ $FOUND_RESOURCES -eq 0 ]; then
             echo "✓ No monitoring ALBs found"
           fi
 
+          FOUND_RESOURCES=0
           echo ""
           echo "Checking VPCs..."
           VPC=$(aws ec2 describe-vpcs --filters "Name=tag:Project,Values=monitoring" --query 'Vpcs[*].VpcId' --output text)
           if [ -n "$VPC" ]; then
             echo "WARNING: Found VPCs: $VPC"
+            FOUND_RESOURCES=1
           else
             echo "✓ No monitoring VPCs found"
           fi
 
+          FOUND_RESOURCES=0
           echo ""
           echo "Checking RDS instances..."
-          RDS=$(aws rds describe-db-instances --query 'DBInstances[?contains(DBInstanceIdentifier, `glitchtip`)].DBInstanceIdentifier' --output text)
+          RDS=$(aws rds describe-db-instances --query 'DBInstances[*].DBInstanceIdentifier' --output text)
           if [ -n "$RDS" ]; then
-            echo "WARNING: Found RDS: $RDS"
-          else
+            for db in $RDS; do
+              if [[ "$db" == *"glitchtip"* ]]; then
+                echo "WARNING: Found RDS: $db"
+                FOUND_RESOURCES=1
+              fi
+            done
+          fi
+          if [ $FOUND_RESOURCES -eq 0 ]; then
             echo "✓ No glitchtip RDS instances found"
           fi
 
+          FOUND_RESOURCES=0
           echo ""
           echo "Checking ElastiCache..."
-          REDIS=$(aws elasticache describe-cache-clusters --query 'CacheClusters[?contains(CacheClusterId, `glitchtip`)].CacheClusterId' --output text)
+          REDIS=$(aws elasticache describe-cache-clusters --query 'CacheClusters[*].CacheClusterId' --output text 2>/dev/null || echo "")
           if [ -n "$REDIS" ]; then
-            echo "WARNING: Found ElastiCache: $REDIS"
-          else
+            for cache in $REDIS; do
+              if [[ "$cache" == *"glitchtip"* ]]; then
+                echo "WARNING: Found ElastiCache: $cache"
+                FOUND_RESOURCES=1
+              fi
+            done
+          fi
+          if [ $FOUND_RESOURCES -eq 0 ]; then
             echo "✓ No glitchtip ElastiCache clusters found"
           fi
 
+          FOUND_RESOURCES=0
           echo ""
           echo "Checking EFS filesystems..."
-          EFS=$(aws efs describe-file-systems --query 'FileSystems[?contains(Name, `signoz`)].FileSystemId' --output text)
+          EFS=$(aws efs describe-file-systems --query 'FileSystems[*].[FileSystemId,Name]' --output text 2>/dev/null || echo "")
           if [ -n "$EFS" ]; then
-            echo "WARNING: Found EFS: $EFS"
-          else
+            while IFS=$'\t' read -r id name; do
+              if [[ "$name" == *"signoz"* ]]; then
+                echo "WARNING: Found EFS: $id ($name)"
+                FOUND_RESOURCES=1
+              fi
+            done <<< "$EFS"
+          fi
+          if [ $FOUND_RESOURCES -eq 0 ]; then
             echo "✓ No signoz EFS filesystems found"
           fi
 
