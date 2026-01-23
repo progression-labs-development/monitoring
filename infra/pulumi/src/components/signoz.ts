@@ -1,6 +1,5 @@
 import * as pulumi from "@pulumi/pulumi";
-import * as aws from "@pulumi/aws";
-import { createInstance, type InstanceOutputs } from "@chrismlittle123/infra";
+import { createInstance } from "@chrismlittle123/infra";
 
 export interface SignozOptions {
   /**
@@ -154,49 +153,12 @@ export function createSignoz(name: string, options: SignozOptions = {}): SignozO
     sshKey: options.sshKey,
     allowHttp: true,   // Port 80 (not used but may be useful)
     allowHttps: true,  // Port 443 (not used but may be useful)
+    additionalPorts: [
+      { port: 3301, description: "SigNoz Frontend UI" },
+      { port: 4317, description: "OTLP gRPC receiver" },
+      { port: 4318, description: "OTLP HTTP receiver" },
+    ],
     userData: signozUserData,
-  });
-
-  // Look up the security group created by createInstance
-  // The naming convention is: {project}-{name}-instance-{environment}
-  // We'll find it by looking for security groups associated with the instance
-  const instanceSg = instance.instanceId.apply(async (instanceId) => {
-    const instanceDetails = await aws.ec2.getInstance({ instanceId });
-    return instanceDetails.vpcSecurityGroupIds[0];
-  });
-
-  // Add SigNoz-specific ports to the security group
-  // Port 3301: SigNoz Frontend UI
-  new aws.ec2.SecurityGroupRule(`${name}-signoz-ui`, {
-    type: "ingress",
-    fromPort: 3301,
-    toPort: 3301,
-    protocol: "tcp",
-    cidrBlocks: ["0.0.0.0/0"],
-    securityGroupId: instanceSg,
-    description: "SigNoz Frontend UI",
-  });
-
-  // Port 4317: OTLP gRPC receiver
-  new aws.ec2.SecurityGroupRule(`${name}-otlp-grpc`, {
-    type: "ingress",
-    fromPort: 4317,
-    toPort: 4317,
-    protocol: "tcp",
-    cidrBlocks: ["0.0.0.0/0"],
-    securityGroupId: instanceSg,
-    description: "OTLP gRPC receiver",
-  });
-
-  // Port 4318: OTLP HTTP receiver
-  new aws.ec2.SecurityGroupRule(`${name}-otlp-http`, {
-    type: "ingress",
-    fromPort: 4318,
-    toPort: 4318,
-    protocol: "tcp",
-    cidrBlocks: ["0.0.0.0/0"],
-    securityGroupId: instanceSg,
-    description: "OTLP HTTP receiver",
   });
 
   return {

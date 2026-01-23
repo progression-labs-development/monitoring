@@ -10,7 +10,7 @@ importers:
     dependencies:
       '@chrismlittle123/infra':
         specifier: github:chrismlittle123/infra
-        version: '@palindrom-ai/infra@https://codeload.github.com/chrismlittle123/infra/tar.gz/403b83aee89649e8d9d44ba0421b851982e8c667(typescript@5.9.3)'
+        version: '@palindrom-ai/infra@https://codeload.github.com/chrismlittle123/infra/tar.gz/cd69ac44d4cbec2b58b60a20192d3f6d9dcfb852(typescript@5.9.3)'
       '@pulumi/aws':
         specifier: ^6.0.0
         version: 6.83.2(typescript@5.9.3)
@@ -410,8 +410,8 @@ packages:
     resolution: {integrity: sha512-lp4qAiMTD4sNWW4DbKLBkfiMZ4jbAboJIGOQr5DvciMRI494OapieI9qiODpOt0XBr1LjIDy1xAGAnVs5supTA==}
     engines: {node: '>=14'}
 
-  '@palindrom-ai/infra@https://codeload.github.com/chrismlittle123/infra/tar.gz/403b83aee89649e8d9d44ba0421b851982e8c667':
-    resolution: {tarball: https://codeload.github.com/chrismlittle123/infra/tar.gz/403b83aee89649e8d9d44ba0421b851982e8c667}
+  '@palindrom-ai/infra@https://codeload.github.com/chrismlittle123/infra/tar.gz/cd69ac44d4cbec2b58b60a20192d3f6d9dcfb852':
+    resolution: {tarball: https://codeload.github.com/chrismlittle123/infra/tar.gz/cd69ac44d4cbec2b58b60a20192d3f6d9dcfb852}
     version: 0.0.1
     hasBin: true
 
@@ -2661,7 +2661,7 @@ snapshots:
 
   '@opentelemetry/semantic-conventions@1.28.0': {}
 
-  '@palindrom-ai/infra@https://codeload.github.com/chrismlittle123/infra/tar.gz/403b83aee89649e8d9d44ba0421b851982e8c667(typescript@5.9.3)':
+  '@palindrom-ai/infra@https://codeload.github.com/chrismlittle123/infra/tar.gz/cd69ac44d4cbec2b58b60a20192d3f6d9dcfb852(typescript@5.9.3)':
     dependencies:
       '@aws-sdk/client-ecs': 3.974.0
       '@aws-sdk/client-iam': 3.974.0
