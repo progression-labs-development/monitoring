@@ -127,7 +127,7 @@ services:
 OVERRIDE
 
 # Start SigNoz
-docker-compose -f docker/clickhouse-setup/docker-compose.yaml -f docker-compose.override.yml up -d
+docker-compose -f docker/docker-compose.yaml -f docker-compose.override.yml up -d
 
 # Create systemd service for auto-restart on reboot
 cat > /etc/systemd/system/signoz.service << 'SERVICE'
@@ -140,8 +140,8 @@ Requires=docker.service
 Type=oneshot
 RemainAfterExit=yes
 WorkingDirectory=/opt/signoz/deploy
-ExecStart=/usr/local/bin/docker-compose -f docker/clickhouse-setup/docker-compose.yaml -f docker-compose.override.yml up -d
-ExecStop=/usr/local/bin/docker-compose -f docker/clickhouse-setup/docker-compose.yaml -f docker-compose.override.yml down
+ExecStart=/usr/local/bin/docker-compose -f docker/docker-compose.yaml -f docker-compose.override.yml up -d
+ExecStop=/usr/local/bin/docker-compose -f docker/docker-compose.yaml -f docker-compose.override.yml down
 TimeoutStartSec=0
 
 [Install]
