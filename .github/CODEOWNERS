@@ -1,0 +1,7 @@
+# Default owner for everything
+* @chrismlittle123
+
+# Critical config files
+check.toml @chrismlittle123
+.eslintrc* @chrismlittle123
+eslint.config.* @chrismlittle123
