@@ -43,3 +43,86 @@ console.log('Manifest regenerated with', m.resources.length, 'resources');
 ```
 
 **Note:** Requires AWS credentials configured for the appropriate profile.
+
+## Secrets Management
+
+### Naming Convention
+
+Secrets follow the pattern: `{project}-{name}-{component}-{env}`
+
+Example: `monitoring-signoz-otlp-endpoint-secret-dev`
+
+### Current Secrets (dev)
+
+| Secret | Description |
+|--------|-------------|
+| `monitoring-signoz-otlp-endpoint-secret-dev` | SigNoz OTLP endpoints (HTTP + gRPC) |
+| `monitoring-glitchtip-db-key-secret-dev` | GlitchTip database secret key |
+| `monitoring-glitchtip-db-password-secret-dev` | GlitchTip database password |
+
+### Syncing OTLP Secrets
+
+**IMPORTANT:** When SigNoz is redeployed, the EC2 instance may get a new IP address. The OTLP endpoint secret must be updated to match.
+
+Use the sync script after any deployment that changes the SigNoz instance:
+
+```bash
+# Sync from dev to dev (after dev deployment)
+./infra/pulumi/scripts/sync-otlp-secrets.sh --source dev --targets dev --aws-only
+
+# Dry run to see what would change
+./infra/pulumi/scripts/sync-otlp-secrets.sh --source dev --targets dev --aws-only --dry-run
+```
+
+The script:
+1. Fetches the current OTLP endpoint from Pulumi stack outputs
+2. Updates the AWS secret with the new IP
+
+### Verifying Secrets Match
+
+```bash
+# Check secret value
+AWS_PROFILE=dev aws secretsmanager get-secret-value \
+  --secret-id monitoring-signoz-otlp-endpoint-secret-dev \
+  --region eu-west-2 --query SecretString --output text | jq .
+
+# Check current SigNoz IP
+AWS_PROFILE=dev aws ec2 describe-instances --region eu-west-2 \
+  --filters "Name=tag:Name,Values=*signoz*" "Name=instance-state-name,Values=running" \
+  --query 'Reservations[].Instances[].PublicIpAddress' --output text
+```
+
+## Destroying Environments
+
+To tear down all resources in an environment, use the destroy workflow:
+
+```bash
+# Trigger destroy for stag
+gh workflow run destroy.yml -f environment=stag
+
+# Trigger destroy for dev
+gh workflow run destroy.yml -f environment=dev
+
+# Monitor the workflow
+gh run watch <run-id>
+```
+
+After destroying, manually delete any remaining secrets:
+
+```bash
+AWS_PROFILE=stag aws secretsmanager delete-secret \
+  --secret-id <secret-name> \
+  --region eu-west-2 \
+  --force-delete-without-recovery
+```
+
+## Resource Sizing
+
+| Component | Size | Instance Type | RAM |
+|-----------|------|---------------|-----|
+| SigNoz EC2 | medium | t3.medium | 4GB |
+| GlitchTip RDS | small | db.t4g.micro | 1GB |
+| GlitchTip Redis | small | cache.t3.small | 1.5GB |
+| GlitchTip ECS | small | - | 512MB |
+
+**Note:** SigNoz requires at least `medium` size. The `small` size (t3.micro, 1GB) is insufficient to run ClickHouse + OTel collector + query service.
