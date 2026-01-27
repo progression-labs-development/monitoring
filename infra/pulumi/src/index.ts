@@ -23,7 +23,7 @@ const config = new pulumi.Config();
 // - Query Service + Frontend for UI
 
 const signoz = createSignoz("signoz", {
-  size: "medium",  // t3.medium: 2 vCPU, 4GB RAM
+  size: "small",  // t3.small: 2 vCPU, 2GB RAM - minimal for testing
   sshKey: config.get("sshPublicKey"),
 });
 

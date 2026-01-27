@@ -28,7 +28,7 @@ function buildEnv(secretKey: string, options: GlitchTipOptions): Record<string, 
 }
 
 export function createGlitchTip(name: string, options: GlitchTipOptions = {}): GlitchTipOutputs {
-  const db = createDatabase(`${name}-db`, { size: "small", version: "15", storage: 20 });
+  const db = createDatabase(`${name}-db`, { size: "small", version: "15", storage: 10 });  // Minimal storage
   const redis = createRedis(`${name}-redis`, { size: "small", version: "7.0" });
 
   // Note: Type assertion needed - Pulumi handles Output<string> at runtime
@@ -37,7 +37,7 @@ export function createGlitchTip(name: string, options: GlitchTipOptions = {}): G
   const web = createContainer(`${name}-web`, {
     image: "glitchtip/glitchtip:latest",
     port: 8080,
-    size: "medium",
+    size: "small",  // Reduced from medium for cost savings
     replicas: 1,
     environment: commonEnv,
     healthCheckPath: "/_health/",

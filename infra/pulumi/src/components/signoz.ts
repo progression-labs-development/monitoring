@@ -4,10 +4,10 @@ import { createInstance } from "@chrismlittle123/infra";
 export interface SignozOptions {
   /**
    * Instance size
-   * - small: Not recommended (may OOM)
-   * - medium: 4GB RAM - minimum viable (t3.medium)
+   * - small: 2GB RAM - minimal for testing (t3.small)
+   * - medium: 4GB RAM - recommended for dev/staging (t3.medium)
    * - large: 16GB RAM - recommended for production (t3.xlarge)
-   * @default "medium"
+   * @default "small"
    */
   size?: "small" | "medium" | "large";
 
@@ -81,7 +81,7 @@ cd /opt/signoz
 git clone -b main https://github.com/SigNoz/signoz.git .
 cd deploy
 
-# Create override file for resource limits and port exposure (optimized for t3.medium)
+# Create override file for resource limits and port exposure (optimized for t3.small - 2GB RAM)
 # Note: SigNoz v0.108+ uses combined "signoz" service (UI+query) on port 8080
 cat > docker-compose.override.yml << 'OVERRIDE'
 services:
@@ -89,17 +89,17 @@ services:
     deploy:
       resources:
         limits:
-          memory: 2G
-        reservations:
           memory: 1G
+        reservations:
+          memory: 512M
 
   signoz:
     deploy:
       resources:
         limits:
-          memory: 768M
-        reservations:
           memory: 384M
+        reservations:
+          memory: 256M
 
   otel-collector:
     ports:
@@ -108,9 +108,9 @@ services:
     deploy:
       resources:
         limits:
-          memory: 512M
-        reservations:
           memory: 256M
+        reservations:
+          memory: 128M
 OVERRIDE
 
 # Start SigNoz
@@ -143,9 +143,9 @@ echo "SigNoz installation completed at $(date)"
 
 export function createSignoz(name: string, options: SignozOptions = {}): SignozOutputs {
   const instance = createInstance(name, {
-    size: options.size || "medium",
+    size: options.size || "small",
     os: "ubuntu-22.04",
-    diskSize: 50, // 50GB for ClickHouse data
+    diskSize: 20, // 20GB for ClickHouse data (minimal for testing)
     sshKey: options.sshKey,
     allowHttp: true,   // Port 80 (not used but may be useful)
     allowHttps: true,  // Port 443 (not used but may be useful)
