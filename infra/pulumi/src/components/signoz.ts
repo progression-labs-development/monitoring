@@ -145,7 +145,7 @@ export function createSignoz(name: string, options: SignozOptions = {}): SignozO
   const instance = createInstance(name, {
     size: options.size || "small",
     os: "ubuntu-22.04",
-    diskSize: 20, // 20GB for ClickHouse data (minimal for testing)
+    diskSize: 50, // EBS volumes cannot be shrunk, keeping at 50GB
     sshKey: options.sshKey,
     allowHttp: true,   // Port 80 (not used but may be useful)
     allowHttps: true,  // Port 443 (not used but may be useful)
