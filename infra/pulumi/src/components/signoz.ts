@@ -143,7 +143,7 @@ echo "SigNoz installation completed at $(date)"
 
 export function createSignoz(name: string, options: SignozOptions = {}): SignozOutputs {
   const instance = createInstance(name, {
-    size: options.size || "small",
+    size: options.size || "medium",
     os: "ubuntu-22.04",
     diskSize: 50, // EBS volumes cannot be shrunk, keeping at 50GB
     sshKey: options.sshKey,
