@@ -27,25 +27,11 @@ jobs:
   destroy:
     name: Destroy ${{ github.event.inputs.environment || 'dev' }} Resources
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: infra/pulumi
     env:
       ENVIRONMENT: ${{ github.event.inputs.environment || 'dev' }}
+      PULUMI_CONFIG_PASSPHRASE: ""
     steps:
       - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 9
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'pnpm'
-          cache-dependency-path: infra/pulumi/pnpm-lock.yaml
-
-      - run: pnpm install
 
       - name: Set AWS Account Config
         id: aws-config
@@ -60,26 +46,12 @@ jobs:
             echo "state_bucket=s3://pulumi-state-215629979895" >> $GITHUB_OUTPUT
           fi
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
+      - uses: chrismlittle123/github-actions/pulumi-destroy-aws@main
         with:
           role-to-assume: ${{ steps.aws-config.outputs.role_arn }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Install Pulumi
-        run: curl -fsSL https://get.pulumi.com | sh && echo "$HOME/.pulumi/bin" >> $GITHUB_PATH
-
-      - name: Destroy
-        run: |
-          export PATH="$HOME/.pulumi/bin:$PATH"
-          pulumi login ${{ steps.aws-config.outputs.state_bucket }}
-          pulumi stack select ${{ env.ENVIRONMENT }} --create
-          pulumi refresh --yes
-          pulumi destroy --yes
-        env:
-          PULUMI_CONFIG_PASSPHRASE: ""
-          PULUMI_STACK: ${{ env.ENVIRONMENT }}
-        timeout-minutes: 30
+          pulumi-state-bucket: ${{ steps.aws-config.outputs.state_bucket }}
+          environment: ${{ env.ENVIRONMENT }}
+          working-directory: "infra/pulumi"
 
       - name: Verify Cleanup
         run: |

@@ -1,5 +1,6 @@
 {
   "name": "monitoring-infra",
+  "packageManager": "pnpm@9.15.4",
   "version": "0.2.0",
   "description": "Observability stack infrastructure (SigNoz) on AWS",
   "main": "src/index.ts",
