@@ -14,18 +14,18 @@
   },
   "dependencies": {
     "@chrismlittle123/infra": "github:chrismlittle123/infra",
-    "@pulumi/pulumi": "^3.0.0"
+    "@pulumi/pulumi": "^3.220.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
     "@standards-kit/conform": "^0.3.2",
-    "@types/node": "^20.0.0",
-    "@vitest/coverage-v8": "^2.0.0",
+    "@types/node": "^20.19.33",
+    "@vitest/coverage-v8": "^2.1.9",
     "eslint": "^9.39.2",
     "eslint-plugin-import": "^2.32.0",
-    "typescript": "^5.0.0",
-    "typescript-eslint": "^8.53.1",
-    "vitest": "^2.0.0"
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.55.0",
+    "vitest": "^2.1.9"
   },
   "pnpm": {
     "overrides": {
