@@ -1,20 +1,7 @@
 name: Destroy
 
 on:
-  push:
-    tags:
-      - 'destroy'
-      - 'destroy-*'
   workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Environment to destroy'
-        required: true
-        default: 'dev'
-        type: choice
-        options:
-          - dev
-          - stag
 
 permissions:
   id-token: write
@@ -25,32 +12,18 @@ env:
 
 jobs:
   destroy:
-    name: Destroy ${{ github.event.inputs.environment || 'dev' }} Resources
+    name: Destroy Resources
     runs-on: ubuntu-latest
     env:
-      ENVIRONMENT: ${{ github.event.inputs.environment || 'dev' }}
       PULUMI_CONFIG_PASSPHRASE: ""
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set AWS Account Config
-        id: aws-config
-        run: |
-          if [ "${{ env.ENVIRONMENT }}" == "stag" ]; then
-            echo "account_id=978212996213" >> $GITHUB_OUTPUT
-            echo "role_arn=arn:aws:iam::978212996213:role/github-actions-pulumi" >> $GITHUB_OUTPUT
-            echo "state_bucket=s3://pulumi-state-978212996213" >> $GITHUB_OUTPUT
-          else
-            echo "account_id=215629979895" >> $GITHUB_OUTPUT
-            echo "role_arn=arn:aws:iam::215629979895:role/github-actions-pulumi" >> $GITHUB_OUTPUT
-            echo "state_bucket=s3://pulumi-state-215629979895" >> $GITHUB_OUTPUT
-          fi
-
       - uses: chrismlittle123/github-actions/pulumi-destroy-aws@main
         with:
-          role-to-assume: ${{ steps.aws-config.outputs.role_arn }}
-          pulumi-state-bucket: ${{ steps.aws-config.outputs.state_bucket }}
-          environment: ${{ env.ENVIRONMENT }}
+          role-to-assume: arn:aws:iam::215629979895:role/github-actions-pulumi
+          pulumi-state-bucket: s3://pulumi-state-215629979895
+          environment: dev
           working-directory: "infra/pulumi"
 
       - name: Verify Cleanup

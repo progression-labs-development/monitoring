@@ -9,6 +9,7 @@ Do not attempt to run Pulumi locally - use the CI/CD pipeline.
 ## Infrastructure
 
 - AWS resources are managed via Pulumi in `infra/pulumi/`
+- Single environment in AWS account `215629979895`
 - State is stored in S3: `s3://pulumi-state-215629979895`
 - OIDC is configured for GitHub Actions to assume `github-actions-pulumi` role
 
@@ -19,16 +20,9 @@ The `infra/pulumi/infra-manifest.json` file contains ARNs of deployed AWS resour
 ```bash
 cd infra/pulumi
 
-# For dev environment
 AWS_PROFILE=dev AWS_REGION=eu-west-2 PULUMI_CONFIG_PASSPHRASE="" \
   pulumi login s3://pulumi-state-215629979895 && \
   pulumi stack select dev && \
-  pulumi stack export > /tmp/stack-export.json
-
-# For stag environment
-AWS_PROFILE=stag AWS_REGION=eu-west-2 PULUMI_CONFIG_PASSPHRASE="" \
-  pulumi login s3://pulumi-state-978212996213 && \
-  pulumi stack select stag && \
   pulumi stack export > /tmp/stack-export.json
 
 # Generate manifest from export
@@ -42,7 +36,7 @@ console.log('Manifest regenerated with', m.resources.length, 'resources');
 "
 ```
 
-**Note:** Requires AWS credentials configured for the appropriate profile.
+**Note:** Requires AWS credentials configured for the dev profile.
 
 ## Secrets Management
 
@@ -52,7 +46,7 @@ Secrets follow the pattern: `{project}-{name}-{component}-{env}`
 
 Example: `monitoring-signoz-otlp-endpoint-secret-dev`
 
-### Current Secrets (dev)
+### Current Secrets
 
 | Secret | Description |
 |--------|-------------|
@@ -65,7 +59,6 @@ Example: `monitoring-signoz-otlp-endpoint-secret-dev`
 Use the sync script after any deployment that changes the SigNoz instance:
 
 ```bash
-# Sync from dev to dev (after dev deployment)
 ./infra/pulumi/scripts/sync-otlp-secrets.sh --source dev --targets dev --aws-only
 
 # Dry run to see what would change
@@ -90,28 +83,15 @@ AWS_PROFILE=dev aws ec2 describe-instances --region eu-west-2 \
   --query 'Reservations[].Instances[].PublicIpAddress' --output text
 ```
 
-## Destroying Environments
+## Destroying Resources
 
-To tear down all resources in an environment, use the destroy workflow:
+To tear down all resources, use the destroy workflow:
 
 ```bash
-# Trigger destroy for stag
-gh workflow run destroy.yml -f environment=stag
-
-# Trigger destroy for dev
-gh workflow run destroy.yml -f environment=dev
+gh workflow run destroy.yml
 
 # Monitor the workflow
 gh run watch <run-id>
-```
-
-After destroying, manually delete any remaining secrets:
-
-```bash
-AWS_PROFILE=stag aws secretsmanager delete-secret \
-  --secret-id <secret-name> \
-  --region eu-west-2 \
-  --force-delete-without-recovery
 ```
 
 ## Resource Sizing
