@@ -25,7 +25,8 @@ const config = new pulumi.Config();
 const signozAdminEmail = "admin@monitoring.local";
 const signozAdminPassword = new random.RandomPassword("signoz-admin-password", {
   length: 24,
-  special: false,
+  special: true,
+  overrideSpecial: "!@#$%&*",
 });
 
 const signoz = createSignoz("signoz", {
