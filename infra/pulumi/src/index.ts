@@ -26,7 +26,7 @@ const signozAdminEmail = "admin@monitoring.local";
 const signozAdminPassword = new random.RandomPassword("signoz-admin-password", {
   length: 24,
   special: true,
-  overrideSpecial: "!@#$%&*",
+  overrideSpecial: "!@#%&*",  // No $ - it breaks bash variable expansion in user data script
 });
 
 const signoz = createSignoz("signoz", {
