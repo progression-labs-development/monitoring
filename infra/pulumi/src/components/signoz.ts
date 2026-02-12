@@ -135,9 +135,50 @@ services:
           memory: 256M
         reservations:
           memory: 128M
+
+  monitoring-mcp:
+    image: monitoring-mcp:latest
+    ports:
+      - "3001:3001"
+    env_file:
+      - .env.mcp
+    environment:
+      - CLICKHOUSE_URL=http://clickhouse:8123
+      - MCP_PORT=3001
+    depends_on:
+      - clickhouse
+    networks:
+      - signoz-net
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+    restart: unless-stopped
 OVERRIDE
 
-# Start SigNoz
+# =============================================================================
+# MCP Server - build image before starting Docker Compose
+# =============================================================================
+echo "Building MCP server image at $(date)"
+
+MCP_API_KEY="${mcpApiKey}"
+
+# Clone monitoring repo and build MCP server image
+git clone --depth 1 https://github.com/chrismlittle123/monitoring.git /tmp/monitoring-repo
+cp -r /tmp/monitoring-repo/mcp /opt/monitoring-mcp
+rm -rf /tmp/monitoring-repo
+
+cd /opt/monitoring-mcp
+docker build -t monitoring-mcp:latest .
+
+# Write MCP environment file for Docker Compose
+cat > /opt/signoz/deploy/.env.mcp << MCPENV
+MCP_API_KEY=$MCP_API_KEY
+MCPENV
+
+cd /opt/signoz/deploy
+
+# Start SigNoz + MCP
 docker-compose -f docker/docker-compose.yaml -f docker-compose.override.yml up -d
 
 # Create systemd service for auto-restart on reboot
@@ -185,55 +226,6 @@ REGISTER_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
 echo "Registration response: $REGISTER_RESPONSE"
 
 echo "SigNoz installation completed at $(date)"
-
-# =============================================================================
-# MCP Server - colocated with SigNoz, queries ClickHouse directly
-# =============================================================================
-echo "Setting up MCP server at $(date)"
-
-MCP_API_KEY="${mcpApiKey}"
-
-# Clone monitoring repo and build MCP server image
-git clone --depth 1 https://github.com/chrismlittle123/monitoring.git /tmp/monitoring-repo
-cp -r /tmp/monitoring-repo/mcp /opt/monitoring-mcp
-rm -rf /tmp/monitoring-repo
-
-cd /opt/monitoring-mcp
-docker build -t monitoring-mcp:latest .
-
-# Write MCP environment file for Docker Compose
-cat > /opt/signoz/deploy/.env.mcp << MCPENV
-MCP_API_KEY=$MCP_API_KEY
-MCPENV
-
-# Append MCP service to docker-compose override
-cat >> /opt/signoz/deploy/docker-compose.override.yml << 'MCP_OVERRIDE'
-
-  monitoring-mcp:
-    image: monitoring-mcp:latest
-    ports:
-      - "3001:3001"
-    env_file:
-      - .env.mcp
-    environment:
-      - CLICKHOUSE_URL=http://clickhouse:8123
-      - MCP_PORT=3001
-    depends_on:
-      - clickhouse
-    networks:
-      - signoz-net
-    deploy:
-      resources:
-        limits:
-          memory: 128M
-    restart: unless-stopped
-MCP_OVERRIDE
-
-# Restart services to pick up MCP
-cd /opt/signoz/deploy
-docker-compose -f docker/docker-compose.yaml -f docker-compose.override.yml up -d
-
-echo "MCP server setup completed at $(date)"
 `;
 }
 
