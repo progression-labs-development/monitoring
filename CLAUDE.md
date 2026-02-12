@@ -1,113 +1,56 @@
-# Claude Code Instructions
+# Agent Instructions
 
-## Deployment
+## Project Overview
 
-**ALWAYS deploy by pushing to GitHub on main branch.** The GitHub Actions workflow will automatically run Pulumi to deploy changes.
+monitoring is the observability infrastructure stack (SigNoz on AWS). Built with TypeScript and Pulumi.
 
-Do not attempt to run Pulumi locally - use the CI/CD pipeline.
+- **Tier:** internal
+- **Package:** `monitoring`
 
-## Infrastructure
+## Quick Reference
 
-- AWS resources are managed via Pulumi in `infra/pulumi/`
-- Single environment in AWS account `215629979895`
-- State is stored in S3: `s3://pulumi-state-215629979895`
-- OIDC is configured for GitHub Actions to assume `github-actions-pulumi` role
+| Task | Command |
+|------|---------|
+| Install | `pnpm install` |
+| Deploy | Push to `main` (CI runs Pulumi automatically) |
 
-## Regenerating the Infrastructure Manifest
+**Do not run Pulumi locally** — always deploy via CI by pushing to main.
 
-The `infra/pulumi/infra-manifest.json` file contains ARNs of deployed AWS resources. To regenerate it:
+## Architecture
 
-```bash
-cd infra/pulumi
-
-AWS_PROFILE=dev AWS_REGION=eu-west-2 PULUMI_CONFIG_PASSPHRASE="" \
-  pulumi login s3://pulumi-state-215629979895 && \
-  pulumi stack select dev && \
-  pulumi stack export > /tmp/stack-export.json
-
-# Generate manifest from export
-node -e "
-const infra = require('@chrismlittle123/infra');
-const fs = require('fs');
-const data = fs.readFileSync('/tmp/stack-export.json', 'utf-8');
-const m = infra.parseStackExport(JSON.parse(data));
-fs.writeFileSync('infra-manifest.json', JSON.stringify(m, null, 2));
-console.log('Manifest regenerated with', m.resources.length, 'resources');
-"
+```
+infra/
+  pulumi/      # Pulumi IaC (AWS resources, SigNoz, secrets)
+docs/
+  runbook.md   # Infrastructure runbook (secrets, sizing, destroy procedures)
 ```
 
-**Note:** Requires AWS credentials configured for the dev profile.
+## Standards & Guidelines
 
-## Secrets Management
+This project uses [@standards-kit/conform](https://github.com/chrismlittle123/standards-kit) for coding standards.
 
-### Naming Convention
+- **Config:** `standards.toml` (extends `typescript-internal` from the standards registry)
+- **Guidelines:** https://chrismlittle123.github.io/standards/
 
-Secrets follow the pattern: `{project}-{name}-secret-{env}`
+Use the MCP tools to query standards at any time:
 
-Example: `monitoring-signoz-otlp-endpoint-secret-dev`
+| Tool | Purpose |
+|------|---------|
+| `get_standards` | Get guidelines matching a context (e.g., `typescript pulumi`) |
+| `list_guidelines` | List all available guidelines |
+| `get_guideline` | Get a specific guideline by ID |
+| `get_ruleset` | Get a tool configuration ruleset (e.g., `typescript-internal`) |
 
-### Current Secrets
+## Workflow
 
-| Secret | Managed By | Description |
-|--------|-----------|-------------|
-| `monitoring-signoz-otlp-endpoint-secret-dev` | Pulumi (`createSecret`) | SigNoz OTLP endpoints (HTTP + gRPC) |
-| `monitoring-signoz-admin-credentials-secret-dev` | Pulumi (`createSecret`) | SigNoz admin email, password, and URL |
+- **Branch:** Create feature branches from `main`
+- **CI:** GitHub Actions runs Pulumi on push to `main`
+- **Deploy:** Pulumi via CI (push to main triggers `pulumi up`)
+- **Commits:** Use conventional commits (`feat:`, `fix:`, `chore:`, etc.)
 
-All secrets are created via `createSecret` in `infra/pulumi/src/index.ts`. Pulumi keeps values in sync with infrastructure on every `pulumi up`.
+## Project-Specific Notes
 
-The admin password is auto-generated via `@pulumi/random.RandomPassword` and the admin account is auto-registered on first boot via the EC2 user data script.
-
-### Verifying Secrets
-
-```bash
-# Check OTLP endpoints
-AWS_PROFILE=dev aws secretsmanager get-secret-value \
-  --secret-id monitoring-signoz-otlp-endpoint-secret-dev \
-  --region eu-west-2 --query SecretString --output text | jq .
-
-# Check admin credentials
-AWS_PROFILE=dev aws secretsmanager get-secret-value \
-  --secret-id monitoring-signoz-admin-credentials-secret-dev \
-  --region eu-west-2 --query SecretString --output text | jq .
-```
-
-### SigNoz Login
-
-Retrieve credentials from AWS Secrets Manager (see above) and use the v2 session API:
-
-```bash
-# Get credentials
-CREDS=$(AWS_PROFILE=dev aws secretsmanager get-secret-value \
-  --secret-id monitoring-signoz-admin-credentials-secret-dev \
-  --region eu-west-2 --query SecretString --output text)
-URL=$(echo $CREDS | jq -r .url)
-EMAIL=$(echo $CREDS | jq -r .email)
-PASSWORD=$(echo $CREDS | jq -r .password)
-
-# Get session context (for org ID)
-ORG_ID=$(curl -s "$URL/api/v2/sessions/context?email=$EMAIL&ref=$URL" | jq -r '.data.orgs[0].id')
-
-# Login
-curl -s "$URL/api/v2/sessions/email_password" \
-  -X POST -H "Content-Type: application/json" \
-  -d "{\"email\":\"$EMAIL\",\"password\":\"$PASSWORD\",\"orgID\":\"$ORG_ID\"}"
-```
-
-## Destroying Resources
-
-To tear down all resources, use the destroy workflow:
-
-```bash
-gh workflow run destroy.yml
-
-# Monitor the workflow
-gh run watch <run-id>
-```
-
-## Resource Sizing
-
-| Component | Size | Instance Type | RAM |
-|-----------|------|---------------|-----|
-| SigNoz EC2 | medium | t3.medium | 4GB |
-
-**Note:** SigNoz requires at least `medium` size. The `small` size (t3.micro, 1GB) is insufficient to run ClickHouse + OTel collector + query service.
+- See `docs/runbook.md` for detailed infrastructure operations (secrets, sizing, destroy procedures, SigNoz login)
+- AWS account: single environment, OIDC configured for GitHub Actions
+- Secrets follow the pattern: `{project}-{name}-secret-{env}`
+- Never run Pulumi locally — always use CI
