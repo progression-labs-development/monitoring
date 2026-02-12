@@ -1,5 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { createMcpServer } from "../../src/server.js";
+import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import type { ClickHouseClient } from "@clickhouse/client";
 
 function mockClient(success: boolean): ClickHouseClient {
@@ -16,16 +18,30 @@ describe("createMcpServer", () => {
     expect(server).toBeDefined();
   });
 
-  it("ping tool returns ClickHouse status via MCP", async () => {
+  it("ping tool returns ClickHouse status via MCP protocol", async () => {
     const client = mockClient(true);
     const server = createMcpServer(client);
 
-    // Access internal tool handler through the server's tool map
-    // We test the tool indirectly through the ping function
-    const { ping } = await import("../../src/tools/ping.js");
-    const result = await ping(client);
+    const [clientTransport, serverTransport] =
+      InMemoryTransport.createLinkedPair();
 
-    expect(result.status).toBe("ok");
-    expect(result.clickhouse).toBe(true);
+    const mcpClient = new Client({ name: "test-client", version: "0.0.1" });
+
+    await Promise.all([
+      mcpClient.connect(clientTransport),
+      server.connect(serverTransport),
+    ]);
+
+    const result = await mcpClient.callTool({ name: "ping" });
+
+    expect(result.content).toHaveLength(1);
+    const text = (result.content as Array<{ type: string; text: string }>)[0]
+      .text;
+    const parsed = JSON.parse(text);
+    expect(parsed.status).toBe("ok");
+    expect(parsed.clickhouse).toBe(true);
+    expect(parsed.timestamp).toBeDefined();
+
+    await mcpClient.close();
   });
 });
