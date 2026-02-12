@@ -69,22 +69,30 @@ jobs:
           PASSWORD=$(echo "$CREDS" | jq -r .password)
 
           echo "=== Verifying SigNoz Login ==="
-          ORG_ID=$(curl -sf "$SIGNOZ_URL/api/v2/sessions/context?email=$EMAIL&ref=$SIGNOZ_URL" \
-            | jq -r '.data.orgs[0].id')
+          # Retry login up to 5 minutes (admin registration runs after health check passes)
+          LOGIN_OK=false
+          for attempt in $(seq 1 30); do
+            ORG_ID=$(curl -sf "$SIGNOZ_URL/api/v2/sessions/context?email=$EMAIL&ref=$SIGNOZ_URL" \
+              | jq -r '.data.orgs[0].id' 2>/dev/null || echo "")
 
-          if [ -z "$ORG_ID" ] || [ "$ORG_ID" = "null" ]; then
-            echo "::warning::Could not get org ID - SigNoz may still be initializing"
-            exit 0
-          fi
+            if [ -n "$ORG_ID" ] && [ "$ORG_ID" != "null" ]; then
+              LOGIN=$(curl -sf "$SIGNOZ_URL/api/v2/sessions/email_password" \
+                -X POST -H "Content-Type: application/json" \
+                -d "{\"email\":\"$EMAIL\",\"password\":\"$PASSWORD\",\"orgID\":\"$ORG_ID\"}" 2>/dev/null || echo "")
 
-          LOGIN=$(curl -sf "$SIGNOZ_URL/api/v2/sessions/email_password" \
-            -X POST -H "Content-Type: application/json" \
-            -d "{\"email\":\"$EMAIL\",\"password\":\"$PASSWORD\",\"orgID\":\"$ORG_ID\"}")
+              if echo "$LOGIN" | jq -e '.data.accessToken' > /dev/null 2>&1; then
+                echo "✓ Login successful (attempt $attempt)"
+                LOGIN_OK=true
+                break
+              fi
+            fi
 
-          if echo "$LOGIN" | jq -e '.data.accessToken' > /dev/null 2>&1; then
-            echo "✓ Login successful"
-          else
-            echo "::warning::Login failed - admin account may not be registered yet"
+            echo "  Waiting for admin registration... (attempt $attempt/30)"
+            sleep 10
+          done
+
+          if [ "$LOGIN_OK" = false ]; then
+            echo "::warning::Login not available after 5 minutes - admin registration may have failed"
             exit 0
           fi
 
