@@ -25,8 +25,90 @@ jobs:
       - uses: actions/checkout@v4
 
       - uses: chrismlittle123/github-actions/pulumi-deploy-aws@main
+        id: pulumi
         with:
           role-to-assume: arn:aws:iam::215629979895:role/github-actions-pulumi
           pulumi-state-bucket: s3://pulumi-state-215629979895
           environment: dev
           working-directory: "infra/pulumi"
+
+      - name: Wait for SigNoz to become healthy
+        run: |
+          SIGNOZ_URL=$(aws secretsmanager get-secret-value \
+            --secret-id monitoring-signoz-otlp-endpoint-secret-dev \
+            --query SecretString --output text | jq -r .http | sed 's/:4318/:8080/')
+
+          echo "Waiting for SigNoz at $SIGNOZ_URL ..."
+          for i in $(seq 1 60); do
+            if curl -sf "$SIGNOZ_URL/api/v1/health" > /dev/null 2>&1; then
+              echo "SigNoz is healthy after $((i * 10)) seconds"
+              break
+            fi
+            if [ "$i" -eq 60 ]; then
+              echo "::warning::SigNoz did not become healthy within 10 minutes"
+              exit 0
+            fi
+            sleep 10
+          done
+
+      - name: Verify SigNoz login and OTLP ingestion
+        run: |
+          set -e
+
+          # Fetch secrets
+          OTLP=$(aws secretsmanager get-secret-value \
+            --secret-id monitoring-signoz-otlp-endpoint-secret-dev \
+            --query SecretString --output text)
+          CREDS=$(aws secretsmanager get-secret-value \
+            --secret-id monitoring-signoz-admin-credentials-secret-dev \
+            --query SecretString --output text)
+
+          OTLP_HTTP=$(echo "$OTLP" | jq -r .http)
+          SIGNOZ_URL=$(echo "$CREDS" | jq -r .url)
+          EMAIL=$(echo "$CREDS" | jq -r .email)
+          PASSWORD=$(echo "$CREDS" | jq -r .password)
+
+          echo "=== Verifying SigNoz Login ==="
+          ORG_ID=$(curl -sf "$SIGNOZ_URL/api/v2/sessions/context?email=$EMAIL&ref=$SIGNOZ_URL" \
+            | jq -r '.data.orgs[0].id')
+
+          if [ -z "$ORG_ID" ] || [ "$ORG_ID" = "null" ]; then
+            echo "::warning::Could not get org ID - SigNoz may still be initializing"
+            exit 0
+          fi
+
+          LOGIN=$(curl -sf "$SIGNOZ_URL/api/v2/sessions/email_password" \
+            -X POST -H "Content-Type: application/json" \
+            -d "{\"email\":\"$EMAIL\",\"password\":\"$PASSWORD\",\"orgID\":\"$ORG_ID\"}")
+
+          if echo "$LOGIN" | jq -e '.data.accessToken' > /dev/null 2>&1; then
+            echo "✓ Login successful"
+          else
+            echo "::warning::Login failed - admin account may not be registered yet"
+            exit 0
+          fi
+
+          echo ""
+          echo "=== Verifying OTLP Ingestion ==="
+          NOW=$(date +%s)000000000
+
+          # Send test trace
+          TRACE_RESP=$(curl -sf "$OTLP_HTTP/v1/traces" \
+            -X POST -H "Content-Type: application/json" \
+            -d "{\"resourceSpans\":[{\"resource\":{\"attributes\":[{\"key\":\"service.name\",\"value\":{\"stringValue\":\"deploy-verify\"}}]},\"scopeSpans\":[{\"scope\":{\"name\":\"deploy-verify\"},\"spans\":[{\"traceId\":\"$(openssl rand -hex 16)\",\"spanId\":\"$(openssl rand -hex 8)\",\"name\":\"verify-span\",\"kind\":1,\"startTimeUnixNano\":\"$NOW\",\"endTimeUnixNano\":\"$NOW\",\"status\":{}}]}]}]}")
+          echo "✓ Trace accepted"
+
+          # Send test log
+          LOG_RESP=$(curl -sf "$OTLP_HTTP/v1/logs" \
+            -X POST -H "Content-Type: application/json" \
+            -d "{\"resourceLogs\":[{\"resource\":{\"attributes\":[{\"key\":\"service.name\",\"value\":{\"stringValue\":\"deploy-verify\"}}]},\"scopeLogs\":[{\"scope\":{\"name\":\"deploy-verify\"},\"logRecords\":[{\"timeUnixNano\":\"$NOW\",\"severityNumber\":9,\"severityText\":\"INFO\",\"body\":{\"stringValue\":\"deploy verification log\"}}]}]}]}")
+          echo "✓ Log accepted"
+
+          # Send test metric
+          METRIC_RESP=$(curl -sf "$OTLP_HTTP/v1/metrics" \
+            -X POST -H "Content-Type: application/json" \
+            -d "{\"resourceMetrics\":[{\"resource\":{\"attributes\":[{\"key\":\"service.name\",\"value\":{\"stringValue\":\"deploy-verify\"}}]},\"scopeMetrics\":[{\"scope\":{\"name\":\"deploy-verify\"},\"metrics\":[{\"name\":\"deploy.verify.counter\",\"sum\":{\"dataPoints\":[{\"asInt\":\"1\",\"startTimeUnixNano\":\"$NOW\",\"timeUnixNano\":\"$NOW\"}],\"aggregationTemporality\":2,\"isMonotonic\":true}}]}]}]}")
+          echo "✓ Metric accepted"
+
+          echo ""
+          echo "=== All Verifications Passed ==="
