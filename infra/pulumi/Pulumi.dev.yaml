@@ -3,3 +3,4 @@ config:
   gcp:region: europe-west2
   monitoring:domain: monitoring.dev.progression-labs.ai
   monitoring:sshPublicKey: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINYsfNIOPB8jUzyOp4ExBoiOD78gXh1KljmLotR9J3eY
+encryptionsalt: v1:HQbSNKcZy0s=:v1:I3qIMLqx9A5Trnnf:xAXzyQdVLUN8O5I/b1AXtFPLB0LRaw==
