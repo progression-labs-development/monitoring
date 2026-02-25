@@ -14,7 +14,7 @@
     "destroy": "pulumi destroy"
   },
   "dependencies": {
-    "@chrismlittle123/infra": "github:progression-labs-development/infra",
+    "@chrismlittle123/infra": "https://github.com/progression-labs-development/infra.git",
     "@pulumi/pulumi": "^3.220.0",
     "@pulumi/random": "^4.19.1"
   },

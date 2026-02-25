@@ -12,8 +12,8 @@ importers:
   .:
     dependencies:
       '@chrismlittle123/infra':
-        specifier: github:progression-labs-development/infra
-        version: git+https://git@github.com:progression-labs-development/infra.git#197efd83fccc5826d493733ce4b3ff17c33b7118(typescript@5.9.3)
+        specifier: https://github.com/progression-labs-development/infra.git
+        version: https://codeload.github.com/progression-labs-development/infra/tar.gz/197efd83fccc5826d493733ce4b3ff17c33b7118(typescript@5.9.3)
       '@pulumi/pulumi':
         specifier: ^3.220.0
         version: 3.220.0(typescript@5.9.3)
@@ -314,8 +314,8 @@ packages:
   '@bcoe/v8-coverage@0.2.3':
     resolution: {integrity: sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==}
 
-  '@chrismlittle123/infra@git+https://git@github.com:progression-labs-development/infra.git#197efd83fccc5826d493733ce4b3ff17c33b7118':
-    resolution: {commit: 197efd83fccc5826d493733ce4b3ff17c33b7118, repo: git@github.com:progression-labs-development/infra.git, type: git}
+  '@chrismlittle123/infra@https://codeload.github.com/progression-labs-development/infra/tar.gz/197efd83fccc5826d493733ce4b3ff17c33b7118':
+    resolution: {tarball: https://codeload.github.com/progression-labs-development/infra/tar.gz/197efd83fccc5826d493733ce4b3ff17c33b7118}
     version: 0.0.1
 
   '@esbuild/aix-ppc64@0.21.5':
@@ -4610,7 +4610,7 @@ snapshots:
 
   '@bcoe/v8-coverage@0.2.3': {}
 
-  '@chrismlittle123/infra@git+https://git@github.com:progression-labs-development/infra.git#197efd83fccc5826d493733ce4b3ff17c33b7118(typescript@5.9.3)':
+  '@chrismlittle123/infra@https://codeload.github.com/progression-labs-development/infra/tar.gz/197efd83fccc5826d493733ce4b3ff17c33b7118(typescript@5.9.3)':
     dependencies:
       '@pulumi/aws': 6.83.2(typescript@5.9.3)
       '@pulumi/gcp': 9.11.0(typescript@5.9.3)
