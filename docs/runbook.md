@@ -8,20 +8,20 @@ Do not attempt to run Pulumi locally - use the CI/CD pipeline.
 
 ## Infrastructure
 
-- AWS resources are managed via Pulumi in `infra/pulumi/`
-- Single environment in AWS account `215629979895`
-- State is stored in S3: `s3://pulumi-state-215629979895`
-- OIDC is configured for GitHub Actions to assume `github-actions-pulumi` role
+- GCP resources are managed via Pulumi in `infra/pulumi/`
+- Single environment in GCP project `christopher-little-dev`
+- State is stored in GCS: `gs://pulumi-state-christopher-little-dev`
+- Workload Identity Federation is configured for GitHub Actions to impersonate `github-actions-pulumi` service account
 
 ## Regenerating the Infrastructure Manifest
 
-The `infra/pulumi/infra-manifest.json` file contains ARNs of deployed AWS resources. To regenerate it:
+The `infra/pulumi/infra-manifest.json` file contains IDs of deployed GCP resources. To regenerate it:
 
 ```bash
 cd infra/pulumi
 
-AWS_PROFILE=dev AWS_REGION=eu-west-2 PULUMI_CONFIG_PASSPHRASE="" \
-  pulumi login s3://pulumi-state-215629979895 && \
+GOOGLE_PROJECT=christopher-little-dev PULUMI_CONFIG_PASSPHRASE="" \
+  pulumi login gs://pulumi-state-christopher-little-dev && \
   pulumi stack select dev && \
   pulumi stack export > /tmp/stack-export.json
 
@@ -36,7 +36,7 @@ console.log('Manifest regenerated with', m.resources.length, 'resources');
 "
 ```
 
-**Note:** Requires AWS credentials configured for the dev profile.
+**Note:** Requires GCP credentials configured for the `christopher-little-dev` project.
 
 ## Secrets Management
 
@@ -55,31 +55,31 @@ Example: `monitoring-signoz-otlp-endpoint-secret-dev`
 
 All secrets are created via `createSecret` in `infra/pulumi/src/index.ts`. Pulumi keeps values in sync with infrastructure on every `pulumi up`.
 
-The admin password is auto-generated via `@pulumi/random.RandomPassword` and the admin account is auto-registered on first boot via the EC2 user data script.
+The admin password is auto-generated via `@pulumi/random.RandomPassword` and the admin account is auto-registered on first boot via the GCE startup script.
 
 ### Verifying Secrets
 
 ```bash
 # Check OTLP endpoints
-AWS_PROFILE=dev aws secretsmanager get-secret-value \
-  --secret-id monitoring-signoz-otlp-endpoint-secret-dev \
-  --region eu-west-2 --query SecretString --output text | jq .
+gcloud secrets versions access latest \
+  --secret=monitoring-signoz-otlp-endpoint-secret-dev \
+  --project=christopher-little-dev | jq .
 
 # Check admin credentials
-AWS_PROFILE=dev aws secretsmanager get-secret-value \
-  --secret-id monitoring-signoz-admin-credentials-secret-dev \
-  --region eu-west-2 --query SecretString --output text | jq .
+gcloud secrets versions access latest \
+  --secret=monitoring-signoz-admin-credentials-secret-dev \
+  --project=christopher-little-dev | jq .
 ```
 
 ### SigNoz Login
 
-Retrieve credentials from AWS Secrets Manager (see above) and use the v2 session API:
+Retrieve credentials from GCP Secret Manager (see above) and use the v2 session API:
 
 ```bash
 # Get credentials
-CREDS=$(AWS_PROFILE=dev aws secretsmanager get-secret-value \
-  --secret-id monitoring-signoz-admin-credentials-secret-dev \
-  --region eu-west-2 --query SecretString --output text)
+CREDS=$(gcloud secrets versions access latest \
+  --secret=monitoring-signoz-admin-credentials-secret-dev \
+  --project=christopher-little-dev)
 URL=$(echo $CREDS | jq -r .url)
 EMAIL=$(echo $CREDS | jq -r .email)
 PASSWORD=$(echo $CREDS | jq -r .password)
@@ -108,6 +108,6 @@ gh run watch <run-id>
 
 | Component | Size | Instance Type | RAM |
 |-----------|------|---------------|-----|
-| SigNoz EC2 | medium | t3.medium | 4GB |
+| SigNoz GCE | medium | e2-medium | 4GB |
 
-**Note:** SigNoz requires at least `medium` size. The `small` size (t3.micro, 1GB) is insufficient to run ClickHouse + OTel collector + query service.
+**Note:** SigNoz requires at least `medium` size. The `small` size (e2-small, 2GB) is insufficient to run ClickHouse + OTel collector + query service.

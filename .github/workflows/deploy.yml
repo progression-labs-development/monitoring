@@ -13,7 +13,7 @@ permissions:
   contents: read
 
 env:
-  AWS_REGION: eu-west-2
+  GCP_PROJECT: christopher-little-dev
 
 jobs:
   deploy:
@@ -25,19 +25,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: chrismlittle123/github-actions/pulumi-deploy-aws@main
+      - uses: progression-labs-development/github-actions/pulumi-deploy-gcp@main
         id: pulumi
         with:
-          role-to-assume: arn:aws:iam::215629979895:role/github-actions-pulumi
-          pulumi-state-bucket: s3://pulumi-state-215629979895
+          workload-identity-provider: projects/10492061315/locations/global/workloadIdentityPools/github-pool/providers/github-provider
+          service-account: github-actions-pulumi@christopher-little-dev.iam.gserviceaccount.com
+          gcp-project: christopher-little-dev
+          pulumi-state-bucket: gs://pulumi-state-christopher-little-dev
           environment: dev
           working-directory: "infra/pulumi"
 
       - name: Wait for SigNoz to become healthy
         run: |
-          SIGNOZ_URL=$(aws secretsmanager get-secret-value \
-            --secret-id monitoring-signoz-otlp-endpoint-secret-dev \
-            --query SecretString --output text | jq -r .http | sed 's/:4318/:8080/')
+          SIGNOZ_URL=$(gcloud secrets versions access latest \
+            --secret=monitoring-signoz-otlp-endpoint-secret-dev \
+            --project=$GCP_PROJECT | jq -r .http | sed 's/:4318/:8080/')
 
           echo "Waiting for SigNoz at $SIGNOZ_URL ..."
           for i in $(seq 1 60); do
@@ -57,12 +59,12 @@ jobs:
           set -e
 
           # Fetch secrets
-          OTLP=$(aws secretsmanager get-secret-value \
-            --secret-id monitoring-signoz-otlp-endpoint-secret-dev \
-            --query SecretString --output text)
-          CREDS=$(aws secretsmanager get-secret-value \
-            --secret-id monitoring-signoz-admin-credentials-secret-dev \
-            --query SecretString --output text)
+          OTLP=$(gcloud secrets versions access latest \
+            --secret=monitoring-signoz-otlp-endpoint-secret-dev \
+            --project=$GCP_PROJECT)
+          CREDS=$(gcloud secrets versions access latest \
+            --secret=monitoring-signoz-admin-credentials-secret-dev \
+            --project=$GCP_PROJECT)
 
           OTLP_HTTP=$(echo "$OTLP" | jq -r .http)
           SIGNOZ_URL=$(echo "$CREDS" | jq -r .url)

@@ -4,9 +4,9 @@ import { createInstance } from "@chrismlittle123/infra";
 export interface SignozOptions {
   /**
    * Instance size
-   * - small: 2GB RAM - minimal for testing (t3.small)
-   * - medium: 4GB RAM - recommended for dev/staging (t3.medium)
-   * - large: 16GB RAM - recommended for production (t3.xlarge)
+   * - small: 2GB RAM - minimal for testing (e2-small)
+   * - medium: 4GB RAM - recommended for dev/staging (e2-medium)
+   * - large: 16GB RAM - recommended for production (e2-standard-4)
    * @default "small"
    */
   size?: "small" | "medium" | "large";
@@ -108,7 +108,7 @@ cd /opt/signoz
 git clone -b main https://github.com/SigNoz/signoz.git .
 cd deploy
 
-# Create override file for resource limits (optimized for t3.medium - 4GB RAM)
+# Create override file for resource limits (optimized for e2-medium - 4GB RAM)
 # Note: SigNoz v0.108+ uses combined "signoz" service (UI+query) on port 8080
 cat > docker-compose.override.yml << 'OVERRIDE'
 services:
@@ -164,7 +164,7 @@ echo "Building MCP server image at $(date)"
 MCP_API_KEY="${mcpApiKey}"
 
 # Clone monitoring repo and build MCP server image
-git clone --depth 1 https://github.com/chrismlittle123/monitoring.git /tmp/monitoring-repo
+git clone --depth 1 https://github.com/progression-labs-development/monitoring.git /tmp/monitoring-repo
 cp -r /tmp/monitoring-repo/mcp /opt/monitoring-mcp
 rm -rf /tmp/monitoring-repo
 
@@ -237,7 +237,7 @@ export function createSignoz(name: string, options: SignozOptions): SignozOutput
   const instance = createInstance(name, {
     size: options.size || "medium",
     os: "ubuntu-22.04",
-    diskSize: 50, // EBS volumes cannot be shrunk, keeping at 50GB
+    diskSize: 50, // Persistent disk, keeping at 50GB
     sshKey: options.sshKey,
     allowHttp: true,   // Port 80 (not used but may be useful)
     allowHttps: true,  // Port 443 (not used but may be useful)

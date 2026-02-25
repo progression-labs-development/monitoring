@@ -3,10 +3,10 @@ import * as random from "@pulumi/random";
 import { createSecret, defineConfig } from "@chrismlittle123/infra";
 import { createSignoz } from "./components/signoz";
 
-// Configure for AWS (100% AWS deployment)
+// Configure for GCP
 defineConfig({
-  cloud: "aws",
-  region: "eu-west-2",
+  cloud: "gcp",
+  region: "europe-west2",
   project: "monitoring",
   environment: pulumi.getStack(),
 });
@@ -17,7 +17,7 @@ const config = new pulumi.Config();
 // =============================================================================
 // SigNoz - Observability Platform (Traces, Metrics, Logs)
 // =============================================================================
-// Deployed on EC2 with Docker Compose
+// Deployed on GCE with Docker Compose
 // - ClickHouse for storage
 // - OTel Collector for ingestion
 // - Query Service + Frontend for UI
@@ -35,7 +35,7 @@ const signozAdminPassword = new random.RandomPassword("signoz-admin-password", {
 });
 
 const signoz = createSignoz("signoz", {
-  size: "medium",  // t3.micro (small) has only 1GB - not enough for SigNoz
+  size: "medium",  // e2-small has only 2GB - not enough for SigNoz
   sshKey: config.get("sshPublicKey"),
   adminEmail: signozAdminEmail,
   adminPassword: signozAdminPassword.result,
@@ -88,7 +88,7 @@ SigNoz (Observability):
   To send traces from your app, set:
     OTEL_EXPORTER_OTLP_ENDPOINT=${signoz.otlpHttpEndpoint}
 
-Note: SigNoz may take 5-10 minutes to fully start after EC2 instance launch.
+Note: SigNoz may take 5-10 minutes to fully start after GCE instance launch.
       Check /var/log/user-data.log on the instance for installation progress.
 ================================================================================
 `);

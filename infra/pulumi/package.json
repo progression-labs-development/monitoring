@@ -2,7 +2,7 @@
   "name": "monitoring-infra",
   "packageManager": "pnpm@9.15.4",
   "version": "0.2.0",
-  "description": "Observability stack infrastructure (SigNoz) on AWS",
+  "description": "Observability stack infrastructure (SigNoz) on GCP",
   "main": "src/index.ts",
   "scripts": {
     "build": "tsc",
@@ -14,7 +14,7 @@
     "destroy": "pulumi destroy"
   },
   "dependencies": {
-    "@chrismlittle123/infra": "github:chrismlittle123/infra",
+    "@chrismlittle123/infra": "github:progression-labs-development/infra",
     "@pulumi/pulumi": "^3.220.0",
     "@pulumi/random": "^4.19.1"
   },

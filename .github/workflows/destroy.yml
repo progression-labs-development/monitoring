@@ -8,7 +8,7 @@ permissions:
   contents: read
 
 env:
-  AWS_REGION: eu-west-2
+  GCP_PROJECT: christopher-little-dev
 
 jobs:
   destroy:
@@ -19,97 +19,71 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: chrismlittle123/github-actions/pulumi-destroy-aws@main
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
         with:
-          role-to-assume: arn:aws:iam::215629979895:role/github-actions-pulumi
-          pulumi-state-bucket: s3://pulumi-state-215629979895
-          environment: dev
-          working-directory: "infra/pulumi"
+          workload_identity_provider: projects/10492061315/locations/global/workloadIdentityPools/github-pool/providers/github-provider
+          service_account: github-actions-pulumi@christopher-little-dev.iam.gserviceaccount.com
 
-      - name: Force-delete secrets
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: infra/pulumi/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: infra/pulumi
+
+      - name: Install Pulumi CLI
+        uses: pulumi/actions@v6
+        with:
+          command: version
+
+      - name: Destroy resources
+        working-directory: infra/pulumi
         run: |
-          echo "Force-deleting secrets to avoid recovery window conflicts on redeploy..."
+          pulumi login gs://pulumi-state-christopher-little-dev
+          pulumi stack select dev
+          pulumi destroy --yes
+
+      - name: Delete secrets
+        run: |
+          echo "Deleting GCP secrets to avoid conflicts on redeploy..."
           for secret in monitoring-signoz-otlp-endpoint-secret-dev monitoring-signoz-admin-credentials-secret-dev monitoring-mcp-api-key-secret-dev; do
-            aws secretsmanager delete-secret --secret-id "$secret" --force-delete-without-recovery --region $AWS_REGION 2>/dev/null && \
-              echo "✓ Force-deleted $secret" || echo "✓ $secret already deleted"
+            gcloud secrets delete "$secret" --project=$GCP_PROJECT --quiet 2>/dev/null && \
+              echo "✓ Deleted $secret" || echo "✓ $secret already deleted"
           done
 
       - name: Verify Cleanup
         run: |
-          echo "=== Verifying AWS Resource Cleanup ==="
+          echo "=== Verifying GCP Resource Cleanup ==="
           echo ""
 
-          echo "Checking EC2 instances..."
-          INSTANCES=$(aws ec2 describe-instances --filters "Name=tag:Project,Values=monitoring" "Name=instance-state-name,Values=running,pending,stopping,stopped" --query 'Reservations[*].Instances[*].InstanceId' --output text)
+          echo "Checking GCE instances..."
+          INSTANCES=$(gcloud compute instances list \
+            --project=$GCP_PROJECT \
+            --filter="labels.project=monitoring" \
+            --format="value(name)" 2>/dev/null || echo "")
           if [ -n "$INSTANCES" ]; then
-            echo "WARNING: Found EC2 instances: $INSTANCES"
+            echo "WARNING: Found GCE instances: $INSTANCES"
           else
-            echo "✓ No monitoring EC2 instances found"
+            echo "✓ No monitoring GCE instances found"
           fi
 
           echo ""
-          echo "Checking ECS clusters..."
-          ECS=$(aws ecs list-clusters --query 'clusterArns' --output text)
-          FOUND=0
-          if [ -n "$ECS" ]; then
-            for cluster in $ECS; do
-              if [[ "$cluster" == *"monitoring"* ]]; then
-                echo "WARNING: Found ECS cluster: $cluster"
-                FOUND=1
-              fi
-            done
-          fi
-          if [ $FOUND -eq 0 ]; then
-            echo "✓ No monitoring ECS clusters found"
-          fi
-
-          echo ""
-          echo "Checking Load Balancers..."
-          ALB=$(aws elbv2 describe-load-balancers --query 'LoadBalancers[*].LoadBalancerName' --output text)
-          FOUND=0
-          if [ -n "$ALB" ]; then
-            for lb in $ALB; do
-              if [[ "$lb" == *"monitoring"* ]]; then
-                echo "WARNING: Found ALB: $lb"
-                FOUND=1
-              fi
-            done
-          fi
-          if [ $FOUND -eq 0 ]; then
-            echo "✓ No monitoring ALBs found"
-          fi
-
-          echo ""
-          echo "Checking RDS instances..."
-          RDS=$(aws rds describe-db-instances --query 'DBInstances[*].DBInstanceIdentifier' --output text)
-          FOUND=0
-          if [ -n "$RDS" ]; then
-            for db in $RDS; do
-              if [[ "$db" == *"monitoring"* ]]; then
-                echo "WARNING: Found RDS: $db"
-                FOUND=1
-              fi
-            done
-          fi
-          if [ $FOUND -eq 0 ]; then
-            echo "✓ No monitoring RDS instances found"
-          fi
-
-          echo ""
-          echo "Checking ElastiCache..."
-          REDIS=$(aws elasticache describe-cache-clusters --query 'CacheClusters[*].CacheClusterId' --output text 2>/dev/null || echo "")
-          FOUND=0
-          if [ -n "$REDIS" ]; then
-            for cache in $REDIS; do
-              if [[ "$cache" == *"monitoring"* ]]; then
-                echo "WARNING: Found ElastiCache: $cache"
-                FOUND=1
-              fi
-            done
-          fi
-          if [ $FOUND -eq 0 ]; then
-            echo "✓ No monitoring ElastiCache clusters found"
-          fi
+          echo "Checking secrets..."
+          for secret in monitoring-signoz-otlp-endpoint-secret-dev monitoring-signoz-admin-credentials-secret-dev monitoring-mcp-api-key-secret-dev; do
+            if gcloud secrets describe "$secret" --project=$GCP_PROJECT > /dev/null 2>&1; then
+              echo "WARNING: Secret still exists: $secret"
+            else
+              echo "✓ $secret deleted"
+            fi
+          done
 
           echo ""
           echo "=== Verification Complete ==="

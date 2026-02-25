@@ -12,8 +12,8 @@ importers:
   .:
     dependencies:
       '@chrismlittle123/infra':
-        specifier: github:chrismlittle123/infra
-        version: '@progression-labs/infra@https://codeload.github.com/chrismlittle123/infra/tar.gz/f4eeea08ee5129ca4d922c3b8a0ceec0fc5f2e1c(typescript@5.9.3)'
+        specifier: github:progression-labs-development/infra
+        version: git+https://git@github.com:progression-labs-development/infra.git#197efd83fccc5826d493733ce4b3ff17c33b7118(typescript@5.9.3)
       '@pulumi/pulumi':
         specifier: ^3.220.0
         version: 3.220.0(typescript@5.9.3)
@@ -313,6 +313,10 @@ packages:
 
   '@bcoe/v8-coverage@0.2.3':
     resolution: {integrity: sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==}
+
+  '@chrismlittle123/infra@git+https://git@github.com:progression-labs-development/infra.git#197efd83fccc5826d493733ce4b3ff17c33b7118':
+    resolution: {commit: 197efd83fccc5826d493733ce4b3ff17c33b7118, repo: git@github.com:progression-labs-development/infra.git, type: git}
+    version: 0.0.1
 
   '@esbuild/aix-ppc64@0.21.5':
     resolution: {integrity: sha512-1SDgH6ZSPTlggy1yI6+Dbkiz8xzpHJEVAlF/AM1tHPLsf5STom9rwtjE4hKAF20FfXXNTFqEYXyJNWh1GiZedQ==}
@@ -738,10 +742,6 @@ packages:
   '@pkgjs/parseargs@0.11.0':
     resolution: {integrity: sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==}
     engines: {node: '>=14'}
-
-  '@progression-labs/infra@https://codeload.github.com/chrismlittle123/infra/tar.gz/f4eeea08ee5129ca4d922c3b8a0ceec0fc5f2e1c':
-    resolution: {tarball: https://codeload.github.com/chrismlittle123/infra/tar.gz/f4eeea08ee5129ca4d922c3b8a0ceec0fc5f2e1c}
-    version: 0.0.1
 
   '@protobufjs/aspromise@1.1.2':
     resolution: {integrity: sha512-j+gKExEuLmKwvz3OgROXtrJ2UG2x8Ch2YZUxahh+s1F2HZ+wAceUNLkvy6zKCPVRkU++ZWQrdxsUeQXmcg4uoQ==}
@@ -4610,6 +4610,17 @@ snapshots:
 
   '@bcoe/v8-coverage@0.2.3': {}
 
+  '@chrismlittle123/infra@git+https://git@github.com:progression-labs-development/infra.git#197efd83fccc5826d493733ce4b3ff17c33b7118(typescript@5.9.3)':
+    dependencies:
+      '@pulumi/aws': 6.83.2(typescript@5.9.3)
+      '@pulumi/gcp': 9.11.0(typescript@5.9.3)
+      '@pulumi/random': 4.19.1(typescript@5.9.3)
+      '@pulumiverse/vercel': 1.15.0(typescript@5.9.3)
+    transitivePeerDependencies:
+      - supports-color
+      - ts-node
+      - typescript
+
   '@esbuild/aix-ppc64@0.21.5':
     optional: true
 
@@ -5062,17 +5073,6 @@ snapshots:
 
   '@pkgjs/parseargs@0.11.0':
     optional: true
-
-  '@progression-labs/infra@https://codeload.github.com/chrismlittle123/infra/tar.gz/f4eeea08ee5129ca4d922c3b8a0ceec0fc5f2e1c(typescript@5.9.3)':
-    dependencies:
-      '@pulumi/aws': 6.83.2(typescript@5.9.3)
-      '@pulumi/gcp': 9.11.0(typescript@5.9.3)
-      '@pulumi/random': 4.19.1(typescript@5.9.3)
-      '@pulumiverse/vercel': 1.15.0(typescript@5.9.3)
-    transitivePeerDependencies:
-      - supports-color
-      - ts-node
-      - typescript
 
   '@protobufjs/aspromise@1.1.2': {}
 

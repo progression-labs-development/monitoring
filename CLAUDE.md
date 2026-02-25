@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-monitoring is the observability infrastructure stack (SigNoz on AWS). Built with TypeScript and Pulumi.
+monitoring is the observability infrastructure stack (SigNoz on GCP). Built with TypeScript and Pulumi.
 
 - **Tier:** internal
 - **Package:** `monitoring`
@@ -20,7 +20,7 @@ monitoring is the observability infrastructure stack (SigNoz on AWS). Built with
 
 ```
 infra/
-  pulumi/      # Pulumi IaC (AWS resources, SigNoz, secrets)
+  pulumi/      # Pulumi IaC (GCP resources, SigNoz, secrets)
 docs/
   runbook.md   # Infrastructure runbook (secrets, sizing, destroy procedures)
 ```
@@ -50,19 +50,19 @@ Use the MCP tools to query standards at any time:
 
 ## MCP Server
 
-An MCP server runs colocated with SigNoz on the EC2 instance, providing coding agents direct access to ClickHouse telemetry data.
+An MCP server runs colocated with SigNoz on the GCE instance, providing coding agents direct access to ClickHouse telemetry data.
 
 - **Source:** `mcp/` directory
-- **Port:** 3001 (exposed via security group)
+- **Port:** 3001 (exposed via firewall rule)
 - **Auth:** Bearer token via `MCP_API_KEY` environment variable
 - **Secret:** `monitoring-mcp-api-key-secret-dev` (contains `apiKey` and `endpoint`)
 
 ### Verifying MCP Server
 
 ```bash
-MCP_SECRET=$(AWS_PROFILE=dev aws secretsmanager get-secret-value \
-  --secret-id monitoring-mcp-api-key-secret-dev \
-  --region eu-west-2 --query SecretString --output text)
+MCP_SECRET=$(gcloud secrets versions access latest \
+  --secret=monitoring-mcp-api-key-secret-dev \
+  --project=christopher-little-dev)
 ENDPOINT=$(echo "$MCP_SECRET" | jq -r .endpoint)
 KEY=$(echo "$MCP_SECRET" | jq -r .apiKey)
 
@@ -78,6 +78,7 @@ curl -H "Authorization: Bearer $KEY" "$ENDPOINT/mcp" \
 ## Project-Specific Notes
 
 - See `docs/runbook.md` for detailed infrastructure operations (secrets, sizing, destroy procedures, SigNoz login)
-- AWS account: single environment, OIDC configured for GitHub Actions
+- GCP project: `christopher-little-dev`, single environment
+- Workload Identity Federation configured for GitHub Actions
 - Secrets follow the pattern: `{project}-{name}-secret-{env}`
 - Never run Pulumi locally — always use CI
