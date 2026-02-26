@@ -1,7 +1,7 @@
 # Default owner for everything
-* @chrismlittle123
+* @progression-labs-development
 
 # Critical config files
-check.toml @chrismlittle123
-.eslintrc* @chrismlittle123
-eslint.config.* @chrismlittle123
+check.toml @progression-labs-development
+.eslintrc* @progression-labs-development
+eslint.config.* @progression-labs-development

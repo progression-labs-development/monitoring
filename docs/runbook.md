@@ -27,7 +27,7 @@ GOOGLE_PROJECT=christopher-little-dev PULUMI_CONFIG_PASSPHRASE="" \
 
 # Generate manifest from export
 node -e "
-const infra = require('@chrismlittle123/infra');
+const infra = require('@progression-labs-development/infra');
 const fs = require('fs');
 const data = fs.readFileSync('/tmp/stack-export.json', 'utf-8');
 const m = infra.parseStackExport(JSON.parse(data));

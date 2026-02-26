@@ -27,10 +27,10 @@ docs/
 
 ## Standards & Guidelines
 
-This project uses [@standards-kit/conform](https://github.com/chrismlittle123/standards-kit) for coding standards.
+This project uses [@standards-kit/conform](https://github.com/progression-labs-development/standards-kit) for coding standards.
 
 - **Config:** `standards.toml` (extends `typescript-internal` from the standards registry)
-- **Guidelines:** https://chrismlittle123.github.io/standards/
+- **Guidelines:** https://progression-labs-development.github.io/standards/
 
 Use the MCP tools to query standards at any time:
 

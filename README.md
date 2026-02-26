@@ -14,7 +14,7 @@ OpenTelemetry-native observability platform for traces, metrics, and logs.
 
 ## Deployment
 
-Deployed via Pulumi using `@chrismlittle123/infra` package. Push to `main` branch triggers GitHub Actions deployment.
+Deployed via Pulumi using `@progression-labs-development/infra` package. Push to `main` branch triggers GitHub Actions deployment.
 
 ```bash
 # Manual deployment (not recommended - use CI/CD)

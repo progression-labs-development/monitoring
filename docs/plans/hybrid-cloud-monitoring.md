@@ -79,7 +79,7 @@ This stack is "set and forget" infrastructure. Your actual apps (deployed on GCP
 
 ---
 
-## Phase 1: Extend `chrismlittle123/infra` Repo
+## Phase 1: Extend `progression-labs-development/infra` Repo
 
 ### 1.1 Add `createInstance` Component for EC2 VMs
 
@@ -552,7 +552,7 @@ systemctl enable signoz
 import * as pulumi from "@pulumi/pulumi";
 import * as fs from "fs";
 import * as path from "path";
-import { createInstance } from "@chrismlittle123/infra";
+import { createInstance } from "@progression-labs-development/infra";
 
 export interface SignozOptions {
   /**
@@ -641,7 +641,7 @@ import {
   createContainer,
   createDatabase,
   createRedis,
-} from "@chrismlittle123/infra";
+} from "@progression-labs-development/infra";
 
 export interface GlitchTipOptions {
   /**
@@ -783,7 +783,7 @@ command: options.command,
 **File: `infra/pulumi/src/index.ts`**
 
 ```typescript
-import { defineConfig } from "@chrismlittle123/infra";
+import { defineConfig } from "@progression-labs-development/infra";
 import { createSignoz } from "./components/signoz";
 import { createGlitchTip } from "./components/glitchtip";
 
