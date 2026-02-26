@@ -8,6 +8,10 @@ export interface IncidentLedgerOptions {
    * @example "europe-west2-docker.pkg.dev/monitoring/incident-ledger/app:latest"
    */
   image: string;
+  /** URL to POST all incident events (agent-workflows webhook) */
+  webhookAgentUrl?: string;
+  /** Slack incoming webhook URL (high/critical incidents only) */
+  slackWebhookUrl?: string;
 }
 
 export interface IncidentLedgerOutputs {
@@ -36,6 +40,14 @@ export function createIncidentLedger(
 
   // 3. Cloud Run service — link: [db] auto-grants Secret Manager access
   //    and injects DB env vars (host, port, database, username, password_secret_name)
+  const environment: Record<string, string> = {};
+  if (options.webhookAgentUrl) {
+    environment.WEBHOOK_AGENT_URL = options.webhookAgentUrl;
+  }
+  if (options.slackWebhookUrl) {
+    environment.SLACK_WEBHOOK_URL = options.slackWebhookUrl;
+  }
+
   const container = createContainer(name, {
     image: options.image,
     port: 3000,
@@ -43,6 +55,7 @@ export function createIncidentLedger(
     public: false,
     minInstances: 1,
     healthCheckPath: "/health",
+    ...(Object.keys(environment).length > 0 && { environment }),
   });
 
   return { db, registry, container };

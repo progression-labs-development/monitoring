@@ -24,15 +24,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: progression-labs-development/github-actions/pulumi-deploy-gcp@main
-        id: pulumi
+      - uses: google-github-actions/auth@v2
         with:
-          workload-identity-provider: projects/10492061315/locations/global/workloadIdentityPools/github-pool/providers/github-provider
-          service-account: github-actions-pulumi@christopher-little-dev.iam.gserviceaccount.com
-          gcp-project: christopher-little-dev
-          pulumi-state-bucket: gs://pulumi-state-christopher-little-dev
-          environment: dev
-          working-directory: "infra/pulumi"
+          workload_identity_provider: projects/10492061315/locations/global/workloadIdentityPools/github-pool/providers/github-provider
+          service_account: github-actions-pulumi@christopher-little-dev.iam.gserviceaccount.com
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: infra/pulumi/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+        working-directory: infra/pulumi
+
+      - uses: pulumi/setup-pulumi@v2
+      - name: Deploy
+        working-directory: infra/pulumi
+        run: |
+          pulumi login gs://pulumi-state-christopher-little-dev
+          pulumi stack select dev
+          pulumi up --yes
 
       - name: Wait for SigNoz to become healthy
         run: |
