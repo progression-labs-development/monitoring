@@ -7,7 +7,12 @@ registry = "github:progression-labs-development/standards"
 rulesets = ["typescript-internal"]
 
 [code.linting.eslint]
-files = ["infra/pulumi/src/**/*.ts", "services/incident-ledger/src/**/*.ts"]
+files = ["infra/pulumi/src/**/*.ts"]
+
+[code.naming]
+rules = [
+  { extensions = ["ts"], file_case = "camelCase", folder_case = "kebab-case", exclude = ["**/tests/__mocks__/**"] },
+]
 
 [process.ci]
 enabled = true
