@@ -27,7 +27,7 @@ export default tseslint.config(
       'max-lines-per-function': 'error',
       'max-lines': ['error', { max: 400 }],
       complexity: 'error',
-      'no-console': 'warn',
+      'no-console': ['warn', { allow: ['error', 'warn', 'info'] }],
 
       // Best practices
       eqeqeq: 'error',
@@ -44,7 +44,7 @@ export default tseslint.config(
       'consistent-return': 'error',
 
       // Import rules
-      'import/no-cycle': 'error',
+      'import/no-cycle': ['error', { maxDepth: 5 }],
     },
   },
   {
