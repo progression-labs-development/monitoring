@@ -59,6 +59,7 @@ export interface SignozOutputs {
  * User data script to install Docker and run SigNoz via Docker Compose.
  * SIGNOZ_ADMIN_EMAIL and SIGNOZ_ADMIN_PASSWORD are interpolated by Pulumi.
  */
+// eslint-disable-next-line max-lines-per-function -- bash script template, splitting would reduce readability
 function buildSignozUserData(adminEmail: string, adminPassword: pulumi.Input<string>): pulumi.Output<string> {
   return pulumi.interpolate`#!/bin/bash
 set -e
