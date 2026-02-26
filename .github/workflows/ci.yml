@@ -8,6 +8,7 @@ on:
 permissions:
   contents: read
   packages: read
+  id-token: write
 
 jobs:
   test:
@@ -15,16 +16,50 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: progression-labs-development/github-actions/typescript-test@main
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
         with:
-          working-directory: infra/pulumi
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: infra/pulumi/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+        working-directory: infra/pulumi
+      - run: npx vitest run --coverage --coverage.reporter=json-summary --coverage.reporter=text
+        working-directory: infra/pulumi
+      - name: Check coverage threshold
+        working-directory: infra/pulumi
+        run: |
+          coverage=$(jq '.total.lines.pct' coverage/coverage-summary.json)
+          echo "Coverage: ${coverage}% (threshold: 80%)"
+          if [ "$(echo "${coverage} < 80" | bc -l)" -eq 1 ]; then
+            echo "::error::Coverage ${coverage}% is below 80%"
+            exit 1
+          fi
 
   standards:
     name: Standards
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: progression-labs-development/github-actions/typescript-standards-check@main
+      - uses: google-github-actions/auth@v2
+        id: gcp-auth
         with:
-          working-directory: infra/pulumi
-
+          workload_identity_provider: projects/10492061315/locations/global/workloadIdentityPools/github-pool/providers/github-provider
+          service_account: github-actions@christopher-little-dev.iam.gserviceaccount.com
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: infra/pulumi/pnpm-lock.yaml
+      - name: Configure GCP Artifact Registry
+        run: |
+          echo "@progression-labs-development:registry=https://europe-west2-npm.pkg.dev/christopher-little-dev/npm-packages/" >> ~/.npmrc
+          echo "//europe-west2-npm.pkg.dev/christopher-little-dev/npm-packages/:_authToken=${{ steps.gcp-auth.outputs.access_token }}" >> ~/.npmrc
+      - run: pnpm install --frozen-lockfile
+        working-directory: infra/pulumi
+      - name: Run conform checks
+        working-directory: infra/pulumi
+        run: |
+          npx @progression-labs-development/conform audit
+          npx @progression-labs-development/conform check
