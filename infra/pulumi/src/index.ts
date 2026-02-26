@@ -45,7 +45,7 @@ const signoz = createSignoz("signoz", {
 // Agents and dashboards poll this for open violations
 
 const incidentLedger = createIncidentLedger("incident-ledger", {
-  image: "europe-west2-docker.pkg.dev/monitoring/incident-ledger/app:latest",
+  image: "europe-west2-docker.pkg.dev/christopher-little-dev/incident-ledger/app:latest",
 });
 
 // =============================================================================
