@@ -25,7 +25,7 @@ jobs:
       - name: Configure auth for private GitHub dependencies
         run: echo "//codeload.github.com/:_authToken=${GITHUB_TOKEN}" >> ~/.npmrc
         env:
-          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ secrets.GH_PKG_TOKEN }}
       - run: pnpm install --frozen-lockfile
         working-directory: infra/pulumi
       - run: npx vitest run --coverage --coverage.reporter=json-summary --coverage.reporter=text
@@ -63,7 +63,7 @@ jobs:
       - name: Configure auth for private GitHub dependencies
         run: echo "//codeload.github.com/:_authToken=${GITHUB_TOKEN}" >> ~/.npmrc
         env:
-          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ secrets.GH_PKG_TOKEN }}
       - run: pnpm install --frozen-lockfile
         working-directory: infra/pulumi
       - name: Run conform checks
