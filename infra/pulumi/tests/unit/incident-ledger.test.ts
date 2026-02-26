@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import type { vi } from "vitest";
-import { createDatabase, createContainer } from "@chrismlittle123/infra";
+import { createDatabase, createContainer } from "@progression-labs-development/infra";
 import { createIncidentLedger } from "../../src/components/incident-ledger";
 
 type MockFn = ReturnType<typeof vi.fn>;

@@ -1,5 +1,5 @@
 import * as pulumi from "@pulumi/pulumi";
-import { createInstance } from "@chrismlittle123/infra";
+import { createInstance } from "@progression-labs-development/infra";
 
 export interface SignozOptions {
   /**

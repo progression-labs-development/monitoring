@@ -1,6 +1,6 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as random from "@pulumi/random";
-import { createSecret, defineConfig } from "@chrismlittle123/infra";
+import { createSecret, defineConfig } from "@progression-labs-development/infra";
 import { createSignoz } from "./components/signoz";
 import { createIncidentLedger } from "./components/incident-ledger";
 
