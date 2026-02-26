@@ -11,9 +11,9 @@ importers:
 
   .:
     dependencies:
-      '@chrismlittle123/infra':
-        specifier: https://github.com/progression-labs-development/infra.git
-        version: https://codeload.github.com/progression-labs-development/infra/tar.gz/197efd83fccc5826d493733ce4b3ff17c33b7118(typescript@5.9.3)
+      '@progression-labs-development/infra':
+        specifier: '*'
+        version: 0.0.1(typescript@5.9.3)
       '@pulumi/gcp':
         specifier: ^8.0.0
         version: 8.41.1(typescript@5.9.3)
@@ -316,10 +316,6 @@ packages:
 
   '@bcoe/v8-coverage@0.2.3':
     resolution: {integrity: sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==}
-
-  '@chrismlittle123/infra@https://codeload.github.com/progression-labs-development/infra/tar.gz/197efd83fccc5826d493733ce4b3ff17c33b7118':
-    resolution: {tarball: https://codeload.github.com/progression-labs-development/infra/tar.gz/197efd83fccc5826d493733ce4b3ff17c33b7118}
-    version: 0.0.1
 
   '@esbuild/aix-ppc64@0.21.5':
     resolution: {integrity: sha512-1SDgH6ZSPTlggy1yI6+Dbkiz8xzpHJEVAlF/AM1tHPLsf5STom9rwtjE4hKAF20FfXXNTFqEYXyJNWh1GiZedQ==}
@@ -746,6 +742,9 @@ packages:
     resolution: {integrity: sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==}
     engines: {node: '>=14'}
 
+  '@progression-labs-development/infra@0.0.1':
+    resolution: {integrity: sha512-Km5v/Jb+TVDgN8qaszUBTLJx8Jio057tFeCwUWcgQwnekax51DKQFU+BWR99hUSOVaypcUCIjouAdGBQTbzNbw==, tarball: https://europe-west2-npm.pkg.dev/christopher-little-dev/npm-packages/@progression-labs-development/infra/-/@progression-labs-development/infra-0.0.1.tgz}
+
   '@protobufjs/aspromise@1.1.2':
     resolution: {integrity: sha512-j+gKExEuLmKwvz3OgROXtrJ2UG2x8Ch2YZUxahh+s1F2HZ+wAceUNLkvy6zKCPVRkU++ZWQrdxsUeQXmcg4uoQ==}
 
@@ -779,6 +778,9 @@ packages:
   '@pulumi/aws@6.83.2':
     resolution: {integrity: sha512-FggAx+LxANUwD9KPlKy4U8uvVjhR8B6vw+doDq7zP3bRWz7CCCd4sXZT2k/ou0erZN78MTzOXYa1nsN0TBEDJg==}
 
+  '@pulumi/azure-native@2.92.0':
+    resolution: {integrity: sha512-g59kLgaLrzOHxO1jG4jVjcPntSt6oq5klRai7p5lC8AO8+dyiOk6cselA4UmMMDgtf1UUXRGFknVxVCgl/rITg==}
+
   '@pulumi/gcp@8.41.1':
     resolution: {integrity: sha512-cEuhyrys+h2HMMdAKIXT6QDjjMzQRDUDV9CytIw146lpXp2bACUr4NwMefX7LgzUW+ebs7t7YClU/sNbI3OaDw==}
 
@@ -799,9 +801,6 @@ packages:
 
   '@pulumi/random@4.19.1':
     resolution: {integrity: sha512-gDotQyxtl+pcJb4oaGfbi6PsK8OtzjBmF1D8PYLvr13kCup98KTIIv/8wF2xbgbFf7ljJn3EblADxZ0u8AC/Dg==}
-
-  '@pulumiverse/vercel@1.15.0':
-    resolution: {integrity: sha512-BtD2PBbsIj9z7JZVy1/LDAzfuJIB+IOxdz0a3hB6zl/7OoNLfJ3zZxbIyZDyqC2GVfl3T0cBER4r8MPGW5fo6w==}
 
   '@rollup/rollup-android-arm-eabi@4.57.1':
     resolution: {integrity: sha512-A6ehUVSiSaaliTxai040ZpZ2zTevHYbvu/lDoeAteHI8QnaosIzm4qwtezfRg1jOYaUmnzLX1AOD6Z+UJjtifg==}
@@ -4616,17 +4615,6 @@ snapshots:
 
   '@bcoe/v8-coverage@0.2.3': {}
 
-  '@chrismlittle123/infra@https://codeload.github.com/progression-labs-development/infra/tar.gz/197efd83fccc5826d493733ce4b3ff17c33b7118(typescript@5.9.3)':
-    dependencies:
-      '@pulumi/aws': 6.83.2(typescript@5.9.3)
-      '@pulumi/gcp': 9.11.0(typescript@5.9.3)
-      '@pulumi/random': 4.19.1(typescript@5.9.3)
-      '@pulumiverse/vercel': 1.15.0(typescript@5.9.3)
-    transitivePeerDependencies:
-      - supports-color
-      - ts-node
-      - typescript
-
   '@esbuild/aix-ppc64@0.21.5':
     optional: true
 
@@ -5080,6 +5068,17 @@ snapshots:
   '@pkgjs/parseargs@0.11.0':
     optional: true
 
+  '@progression-labs-development/infra@0.0.1(typescript@5.9.3)':
+    dependencies:
+      '@pulumi/aws': 6.83.2(typescript@5.9.3)
+      '@pulumi/azure-native': 2.92.0(typescript@5.9.3)
+      '@pulumi/gcp': 9.11.0(typescript@5.9.3)
+      '@pulumi/random': 4.19.1(typescript@5.9.3)
+    transitivePeerDependencies:
+      - supports-color
+      - ts-node
+      - typescript
+
   '@protobufjs/aspromise@1.1.2': {}
 
   '@protobufjs/base64@1.1.2': {}
@@ -5107,6 +5106,14 @@ snapshots:
     dependencies:
       '@pulumi/pulumi': 3.220.0(typescript@5.9.3)
       mime: 2.6.0
+    transitivePeerDependencies:
+      - supports-color
+      - ts-node
+      - typescript
+
+  '@pulumi/azure-native@2.92.0(typescript@5.9.3)':
+    dependencies:
+      '@pulumi/pulumi': 3.220.0(typescript@5.9.3)
     transitivePeerDependencies:
       - supports-color
       - ts-node
@@ -5168,14 +5175,6 @@ snapshots:
       - supports-color
 
   '@pulumi/random@4.19.1(typescript@5.9.3)':
-    dependencies:
-      '@pulumi/pulumi': 3.220.0(typescript@5.9.3)
-    transitivePeerDependencies:
-      - supports-color
-      - ts-node
-      - typescript
-
-  '@pulumiverse/vercel@1.15.0(typescript@5.9.3)':
     dependencies:
       '@pulumi/pulumi': 3.220.0(typescript@5.9.3)
     transitivePeerDependencies:

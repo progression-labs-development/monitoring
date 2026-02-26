@@ -8,8 +8,8 @@ export default defineConfig({
     exclude: ["tests/integration/**"],
     alias: {
       // Alias external packages to allow mocking
-      "@chrismlittle123/infra": new URL(
-        "./tests/__mocks__/@chrismlittle123/infra.ts",
+      "@progression-labs-development/infra": new URL(
+        "./tests/__mocks__/@progression-labs-development/infra.ts",
         import.meta.url
       ).pathname,
       "@pulumi/pulumi": new URL(

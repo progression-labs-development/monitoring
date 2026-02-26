@@ -1,6 +1,6 @@
 import * as gcp from "@pulumi/gcp";
-import { createDatabase, createContainer } from "@chrismlittle123/infra";
-import type { DatabaseOutputs, ContainerOutputs } from "@chrismlittle123/infra";
+import { createDatabase, createContainer } from "@progression-labs-development/infra";
+import type { DatabaseOutputs, ContainerOutputs } from "@progression-labs-development/infra";
 
 export interface IncidentLedgerOptions {
   /**
