@@ -36,6 +36,10 @@ jobs:
           node-version: 22
           cache: pnpm
           cache-dependency-path: infra/pulumi/pnpm-lock.yaml
+      - name: Configure auth for private GitHub dependencies
+        run: echo "//codeload.github.com/:_authToken=${GITHUB_TOKEN}" >> ~/.npmrc
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
       - run: pnpm install --frozen-lockfile
         working-directory: infra/pulumi
 
