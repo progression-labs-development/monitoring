@@ -16,6 +16,10 @@ export default defineConfig({
         "./tests/__mocks__/@pulumi/pulumi.ts",
         import.meta.url
       ).pathname,
+      "@pulumi/gcp": new URL(
+        "./tests/__mocks__/@pulumi/gcp.ts",
+        import.meta.url
+      ).pathname,
     },
     coverage: {
       provider: "v8",

@@ -2,6 +2,7 @@ import * as pulumi from "@pulumi/pulumi";
 import * as random from "@pulumi/random";
 import { createSecret, defineConfig } from "@chrismlittle123/infra";
 import { createSignoz } from "./components/signoz";
+import { createIncidentLedger } from "./components/incident-ledger";
 
 // Configure for GCP
 defineConfig({
@@ -38,6 +39,16 @@ const signoz = createSignoz("signoz", {
 });
 
 // =============================================================================
+// Incident Ledger — Enforcement Violation Database + API
+// =============================================================================
+// Cloud SQL (PostgreSQL) + Cloud Run (Hono API)
+// Agents and dashboards poll this for open violations
+
+const incidentLedger = createIncidentLedger("incident-ledger", {
+  image: "europe-west2-docker.pkg.dev/monitoring/incident-ledger/app:latest",
+});
+
+// =============================================================================
 // Secrets
 // =============================================================================
 
@@ -62,6 +73,9 @@ export const signozOtlpHttp = signoz.otlpHttpEndpoint;
 export const signozOtlpGrpc = signoz.otlpGrpcEndpoint;
 export const signozInstanceId = signoz.instanceId;
 export const signozPublicIp = signoz.publicIp;
+
+export const incidentLedgerUrl = incidentLedger.container.url;
+export const incidentLedgerDbEndpoint = incidentLedger.db.endpoint;
 
 export const instructions = pulumi.output(`
 ================================================================================
