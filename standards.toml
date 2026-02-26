@@ -6,5 +6,8 @@ tier = "internal"
 registry = "github:progression-labs-development/standards"
 rulesets = ["typescript-internal"]
 
+[code.linting.eslint]
+files = ["infra/pulumi/src/**/*.ts", "services/incident-ledger/src/**/*.ts"]
+
 [process.ci]
 enabled = true
