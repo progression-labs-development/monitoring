@@ -28,11 +28,3 @@ jobs:
         with:
           working-directory: infra/pulumi
 
-  test-mcp:
-    name: Test MCP
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: progression-labs-development/github-actions/typescript-test@main
-        with:
-          working-directory: mcp

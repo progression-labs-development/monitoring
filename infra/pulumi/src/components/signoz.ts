@@ -26,11 +26,6 @@ export interface SignozOptions {
    * Admin password for initial registration
    */
   adminPassword: pulumi.Input<string>;
-
-  /**
-   * API key for MCP server authentication
-   */
-  mcpApiKey: pulumi.Input<string>;
 }
 
 export interface SignozOutputs {
@@ -58,18 +53,13 @@ export interface SignozOutputs {
    * Instance ID
    */
   instanceId: pulumi.Output<string>;
-
-  /**
-   * MCP server endpoint
-   */
-  mcpEndpoint: pulumi.Output<string>;
 }
 
 /**
  * User data script to install Docker and run SigNoz via Docker Compose.
  * SIGNOZ_ADMIN_EMAIL and SIGNOZ_ADMIN_PASSWORD are interpolated by Pulumi.
  */
-function buildSignozUserData(adminEmail: string, adminPassword: pulumi.Input<string>, mcpApiKey: pulumi.Input<string>): pulumi.Output<string> {
+function buildSignozUserData(adminEmail: string, adminPassword: pulumi.Input<string>): pulumi.Output<string> {
   return pulumi.interpolate`#!/bin/bash
 set -e
 
@@ -135,51 +125,9 @@ services:
           memory: 256M
         reservations:
           memory: 128M
-
-  monitoring-mcp:
-    image: monitoring-mcp:latest
-    ports:
-      - "3001:3001"
-    env_file:
-      - .env.mcp
-    environment:
-      - CLICKHOUSE_URL=http://clickhouse:8123
-      - MCP_PORT=3001
-    depends_on:
-      - clickhouse
-    networks:
-      - signoz-net
-    deploy:
-      resources:
-        limits:
-          memory: 128M
-    restart: unless-stopped
 OVERRIDE
 
-# =============================================================================
-# MCP Server - build image before starting Docker Compose
-# =============================================================================
-echo "Building MCP server image at $(date)"
-
-MCP_API_KEY="${mcpApiKey}"
-
-# Clone monitoring repo and build MCP server image
-git clone --depth 1 https://github.com/progression-labs-development/monitoring.git /tmp/monitoring-repo
-cp -r /tmp/monitoring-repo/mcp /opt/monitoring-mcp
-rm -rf /tmp/monitoring-repo
-
-cd /opt/monitoring-mcp
-docker build -t monitoring-mcp:latest .
-
-# Write MCP environment file for Docker Compose
-# env_file paths resolve relative to the project directory (docker/ subdir)
-cat > /opt/signoz/deploy/docker/.env.mcp << MCPENV
-MCP_API_KEY=$MCP_API_KEY
-MCPENV
-
-cd /opt/signoz/deploy
-
-# Start SigNoz + MCP
+# Start SigNoz
 docker-compose -f docker/docker-compose.yaml -f docker-compose.override.yml up -d
 
 # Create systemd service for auto-restart on reboot
@@ -232,7 +180,7 @@ echo "SigNoz installation completed at $(date)"
 
 export function createSignoz(name: string, options: SignozOptions): SignozOutputs {
   const adminEmail = options.adminEmail || "admin@monitoring.local";
-  const userData = buildSignozUserData(adminEmail, options.adminPassword, options.mcpApiKey);
+  const userData = buildSignozUserData(adminEmail, options.adminPassword);
 
   const instance = createInstance(name, {
     size: options.size || "medium",
@@ -245,7 +193,6 @@ export function createSignoz(name: string, options: SignozOptions): SignozOutput
       { port: 8080, description: "SigNoz UI" },
       { port: 4317, description: "OTLP gRPC receiver" },
       { port: 4318, description: "OTLP HTTP receiver" },
-      { port: 3001, description: "MCP server" },
     ],
     userData: userData as unknown as string,
   });
@@ -256,6 +203,5 @@ export function createSignoz(name: string, options: SignozOptions): SignozOutput
     otlpGrpcEndpoint: pulumi.interpolate`${instance.publicIp}:4317`,
     publicIp: instance.publicIp,
     instanceId: instance.instanceId,
-    mcpEndpoint: pulumi.interpolate`http://${instance.publicIp}:3001`,
   };
 }

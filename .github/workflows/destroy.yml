@@ -54,7 +54,7 @@ jobs:
       - name: Delete secrets
         run: |
           echo "Deleting GCP secrets to avoid conflicts on redeploy..."
-          for secret in monitoring-signoz-otlp-endpoint-secret-dev monitoring-signoz-admin-credentials-secret-dev monitoring-mcp-api-key-secret-dev; do
+          for secret in monitoring-signoz-otlp-endpoint-secret-dev monitoring-signoz-admin-credentials-secret-dev; do
             gcloud secrets delete "$secret" --project=$GCP_PROJECT --quiet 2>/dev/null && \
               echo "✓ Deleted $secret" || echo "✓ $secret already deleted"
           done
@@ -77,7 +77,7 @@ jobs:
 
           echo ""
           echo "Checking secrets..."
-          for secret in monitoring-signoz-otlp-endpoint-secret-dev monitoring-signoz-admin-credentials-secret-dev monitoring-mcp-api-key-secret-dev; do
+          for secret in monitoring-signoz-otlp-endpoint-secret-dev monitoring-signoz-admin-credentials-secret-dev; do
             if gcloud secrets describe "$secret" --project=$GCP_PROJECT > /dev/null 2>&1; then
               echo "WARNING: Secret still exists: $secret"
             else
