@@ -11,10 +11,13 @@
     "test:watch": "vitest",
     "preview": "pulumi preview",
     "up": "pulumi up",
-    "destroy": "pulumi destroy"
+    "destroy": "pulumi destroy",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@chrismlittle123/infra": "https://github.com/progression-labs-development/infra.git",
+    "@pulumi/gcp": "^8.0.0",
     "@pulumi/pulumi": "^3.220.0",
     "@pulumi/random": "^4.19.1"
   },
