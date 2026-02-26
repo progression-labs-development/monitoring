@@ -15,6 +15,17 @@ export type IncidentSeverity = "critical" | "high" | "medium" | "low";
 
 export type IncidentStatus = "open" | "claimed" | "remediated" | "escalated";
 
+export type EventType =
+  | "incident.created"
+  | "incident.claimed"
+  | "incident.resolved";
+
+export interface IncidentEvent {
+  event: EventType;
+  timestamp: string;
+  incident: Incident;
+}
+
 export interface Incident {
   id: string;
   domain: IncidentDomain;
