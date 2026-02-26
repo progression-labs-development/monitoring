@@ -1,0 +1,11 @@
+commit_msg=$(cat "$1")
+pattern="^(feat|fix|chore|docs|refactor|test|style|perf|ci|build)(\(.+\))?: .+"
+
+if ! echo "$commit_msg" | grep -qE "$pattern"; then
+  echo "ERROR: Commit message must follow conventional commits format."
+  echo "  Format: type(scope)?: description"
+  echo "  Types: feat, fix, chore, docs, refactor, test, style, perf, ci, build"
+  echo ""
+  echo "  Got: $commit_msg"
+  exit 1
+fi

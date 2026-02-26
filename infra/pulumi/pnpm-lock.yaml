@@ -14,6 +14,9 @@ importers:
       '@chrismlittle123/infra':
         specifier: https://github.com/progression-labs-development/infra.git
         version: https://codeload.github.com/progression-labs-development/infra/tar.gz/197efd83fccc5826d493733ce4b3ff17c33b7118(typescript@5.9.3)
+      '@pulumi/gcp':
+        specifier: ^8.0.0
+        version: 8.41.1(typescript@5.9.3)
       '@pulumi/pulumi':
         specifier: ^3.220.0
         version: 3.220.0(typescript@5.9.3)
@@ -775,6 +778,9 @@ packages:
 
   '@pulumi/aws@6.83.2':
     resolution: {integrity: sha512-FggAx+LxANUwD9KPlKy4U8uvVjhR8B6vw+doDq7zP3bRWz7CCCd4sXZT2k/ou0erZN78MTzOXYa1nsN0TBEDJg==}
+
+  '@pulumi/gcp@8.41.1':
+    resolution: {integrity: sha512-cEuhyrys+h2HMMdAKIXT6QDjjMzQRDUDV9CytIw146lpXp2bACUr4NwMefX7LgzUW+ebs7t7YClU/sNbI3OaDw==}
 
   '@pulumi/gcp@9.11.0':
     resolution: {integrity: sha512-PMjKbpeKTeNIAzZf8nCF2MPlUinMtGfRUaG2E6ktAgiP7CNApebQ1+ThifExCYwJ3Uer9j7FA0ukd2x9yFoSmA==}
@@ -5101,6 +5107,16 @@ snapshots:
     dependencies:
       '@pulumi/pulumi': 3.220.0(typescript@5.9.3)
       mime: 2.6.0
+    transitivePeerDependencies:
+      - supports-color
+      - ts-node
+      - typescript
+
+  '@pulumi/gcp@8.41.1(typescript@5.9.3)':
+    dependencies:
+      '@npmcli/package-json': 6.2.0
+      '@pulumi/pulumi': 3.220.0(typescript@5.9.3)
+      '@types/express': 4.17.25
     transitivePeerDependencies:
       - supports-color
       - ts-node

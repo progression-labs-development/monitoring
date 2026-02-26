@@ -11,11 +11,11 @@ export const interpolate = (
 
 export const output = (value: unknown) => value;
 
-export class Output<T> {
-  static create<T>(value: T): Output<T> {
-    return value as unknown as Output<T>;
-  }
-}
+export const Output = {
+  create<T>(value: T) {
+    return value;
+  },
+};
 
 export class Config {
   private values: Record<string, string> = {};

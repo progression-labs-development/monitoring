@@ -1,19 +1,20 @@
 import { describe, it, expect, beforeEach } from "vitest";
+import type { vi } from "vitest";
 import { createInstance } from "@chrismlittle123/infra";
 import { createSignoz } from "../../src/components/signoz";
 
-// Get the mock function
-const mockCreateInstance = createInstance as ReturnType<typeof import("vitest").vi.fn>;
+type MockFn = ReturnType<typeof vi.fn>;
+const mockCreateInstance = createInstance as MockFn;
 
-describe("createSignoz", () => {
-  beforeEach(() => {
-    mockCreateInstance.mockClear();
-    mockCreateInstance.mockReturnValue({
-      publicIp: "1.2.3.4",
-      instanceId: "i-1234567890abcdef0",
-    });
+beforeEach(() => {
+  mockCreateInstance.mockClear();
+  mockCreateInstance.mockReturnValue({
+    publicIp: "1.2.3.4",
+    instanceId: "i-1234567890abcdef0",
   });
+});
 
+describe("createSignoz — instance creation", () => {
   it("should create an instance with default medium size", () => {
     createSignoz("test-signoz", { adminPassword: "test-password" });
 
@@ -23,7 +24,7 @@ describe("createSignoz", () => {
         size: "medium",
         os: "ubuntu-22.04",
         diskSize: 50,
-      })
+      }),
     );
   });
 
@@ -35,9 +36,7 @@ describe("createSignoz", () => {
 
     expect(mockCreateInstance).toHaveBeenCalledWith(
       "test-signoz",
-      expect.objectContaining({
-        sshKey: "ssh-ed25519 AAAA...",
-      })
+      expect.objectContaining({ sshKey: "ssh-ed25519 AAAA..." }),
     );
   });
 
@@ -46,9 +45,7 @@ describe("createSignoz", () => {
 
     expect(mockCreateInstance).toHaveBeenCalledWith(
       "test-signoz",
-      expect.objectContaining({
-        sshKey: undefined,
-      })
+      expect.objectContaining({ sshKey: undefined }),
     );
   });
 
@@ -57,12 +54,12 @@ describe("createSignoz", () => {
 
     expect(mockCreateInstance).toHaveBeenCalledWith(
       "test-signoz",
-      expect.objectContaining({
-        size: "large",
-      })
+      expect.objectContaining({ size: "large" }),
     );
   });
+});
 
+describe("createSignoz — ports and access", () => {
   it("should configure required ports for SigNoz", () => {
     createSignoz("test-signoz", { adminPassword: "test-password" });
 
@@ -70,14 +67,25 @@ describe("createSignoz", () => {
       "test-signoz",
       expect.objectContaining({
         additionalPorts: expect.arrayContaining([
-          expect.objectContaining({ port: 8080 }), // UI
-          expect.objectContaining({ port: 4317 }), // OTLP gRPC
-          expect.objectContaining({ port: 4318 }), // OTLP HTTP
+          expect.objectContaining({ port: 8080 }),
+          expect.objectContaining({ port: 4317 }),
+          expect.objectContaining({ port: 4318 }),
         ]),
-      })
+      }),
     );
   });
 
+  it("should configure HTTP and HTTPS access", () => {
+    createSignoz("test-signoz", { adminPassword: "test-password" });
+
+    expect(mockCreateInstance).toHaveBeenCalledWith(
+      "test-signoz",
+      expect.objectContaining({ allowHttp: true, allowHttps: true }),
+    );
+  });
+});
+
+describe("createSignoz — outputs and userData", () => {
   it("should return expected output structure", () => {
     const result = createSignoz("test-signoz", { adminPassword: "test-password" });
 
@@ -94,19 +102,7 @@ describe("createSignoz", () => {
     const callArgs = mockCreateInstance.mock.calls[0][1];
     expect(callArgs.userData).toContain("docker");
     expect(callArgs.userData).toContain("signoz");
-    expect(callArgs.userData).toContain("set -e"); // Error handling
+    expect(callArgs.userData).toContain("set -e");
     expect(callArgs.userData).toContain("docker-compose");
-  });
-
-  it("should configure HTTP and HTTPS access", () => {
-    createSignoz("test-signoz", { adminPassword: "test-password" });
-
-    expect(mockCreateInstance).toHaveBeenCalledWith(
-      "test-signoz",
-      expect.objectContaining({
-        allowHttp: true,
-        allowHttps: true,
-      })
-    );
   });
 });

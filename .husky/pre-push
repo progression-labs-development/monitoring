@@ -1,0 +1,1 @@
+cd infra/pulumi && pnpm typecheck && pnpm lint && pnpm test
