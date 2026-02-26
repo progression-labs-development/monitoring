@@ -55,23 +55,9 @@ export interface SignozOutputs {
   instanceId: pulumi.Output<string>;
 }
 
-/**
- * User data script to install Docker and run SigNoz via Docker Compose.
- * SIGNOZ_ADMIN_EMAIL and SIGNOZ_ADMIN_PASSWORD are interpolated by Pulumi.
- */
-// eslint-disable-next-line max-lines-per-function -- bash script template, splitting would reduce readability
-function buildSignozUserData(adminEmail: string, adminPassword: pulumi.Input<string>): pulumi.Output<string> {
-  return pulumi.interpolate`#!/bin/bash
-set -e
+// Bash script sections for SigNoz user data (split to stay under max-lines-per-function)
 
-# Log output to file for debugging
-exec > >(tee /var/log/user-data.log) 2>&1
-echo "Starting SigNoz installation at $(date)"
-
-# Admin credentials (set by Pulumi)
-SIGNOZ_ADMIN_EMAIL="${adminEmail}"
-SIGNOZ_ADMIN_PASSWORD="${adminPassword}"
-
+const INSTALL_DOCKER = `
 # Update system
 apt-get update
 apt-get upgrade -y
@@ -89,8 +75,9 @@ systemctl start docker
 
 # Install Docker Compose standalone (for compatibility)
 curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-chmod +x /usr/local/bin/docker-compose
+chmod +x /usr/local/bin/docker-compose`;
 
+const SETUP_SIGNOZ = `
 # Create data directory
 mkdir -p /opt/signoz
 cd /opt/signoz
@@ -129,8 +116,9 @@ services:
 OVERRIDE
 
 # Start SigNoz
-docker-compose -f docker/docker-compose.yaml -f docker-compose.override.yml up -d
+docker-compose -f docker/docker-compose.yaml -f docker-compose.override.yml up -d`;
 
+const AUTOSTART_AND_REGISTER = `
 # Create systemd service for auto-restart on reboot
 cat > /etc/systemd/system/signoz.service << 'SERVICE'
 [Unit]
@@ -175,7 +163,22 @@ REGISTER_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
   -d "$REGISTER_PAYLOAD")
 echo "Registration response: $REGISTER_RESPONSE"
 
-echo "SigNoz installation completed at $(date)"
+echo "SigNoz installation completed at $(date)"`;
+
+function buildSignozUserData(adminEmail: string, adminPassword: pulumi.Input<string>): pulumi.Output<string> {
+  return pulumi.interpolate`#!/bin/bash
+set -e
+
+# Log output to file for debugging
+exec > >(tee /var/log/user-data.log) 2>&1
+echo "Starting SigNoz installation at $(date)"
+
+# Admin credentials (set by Pulumi)
+SIGNOZ_ADMIN_EMAIL="${adminEmail}"
+SIGNOZ_ADMIN_PASSWORD="${adminPassword}"
+${INSTALL_DOCKER}
+${SETUP_SIGNOZ}
+${AUTOSTART_AND_REGISTER}
 `;
 }
 

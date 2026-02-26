@@ -13,7 +13,6 @@ function randomHex(bytes: number): string {
   ).join("");
 }
 
-// eslint-disable-next-line max-lines-per-function -- integration test with large OTLP payloads
 describe.skipIf(!!skipReason)("SigNoz integration", () => {
   let traceId: string;
   let spanId: string;

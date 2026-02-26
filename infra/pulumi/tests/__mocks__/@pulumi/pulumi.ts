@@ -11,12 +11,11 @@ export const interpolate = (
 
 export const output = (value: unknown) => value;
 
-// eslint-disable-next-line @typescript-eslint/no-extraneous-class
-export class Output<_T> {
-  static create<U>(value: U): Output<U> {
-    return value as unknown as Output<U>;
-  }
-}
+export const Output = {
+  create<T>(value: T) {
+    return value;
+  },
+};
 
 export class Config {
   private values: Record<string, string> = {};
