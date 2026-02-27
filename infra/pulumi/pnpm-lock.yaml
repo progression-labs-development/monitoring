@@ -12,8 +12,8 @@ importers:
   .:
     dependencies:
       '@progression-labs-development/infra':
-        specifier: '*'
-        version: 0.0.1(typescript@5.9.3)
+        specifier: ^0.0.2
+        version: 0.0.2(typescript@5.9.3)
       '@pulumi/gcp':
         specifier: ^8.0.0
         version: 8.41.1(typescript@5.9.3)
@@ -742,8 +742,8 @@ packages:
     resolution: {integrity: sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==}
     engines: {node: '>=14'}
 
-  '@progression-labs-development/infra@0.0.1':
-    resolution: {integrity: sha512-Km5v/Jb+TVDgN8qaszUBTLJx8Jio057tFeCwUWcgQwnekax51DKQFU+BWR99hUSOVaypcUCIjouAdGBQTbzNbw==, tarball: https://europe-west2-npm.pkg.dev/christopher-little-dev/npm-packages/@progression-labs-development/infra/-/@progression-labs-development/infra-0.0.1.tgz}
+  '@progression-labs-development/infra@0.0.2':
+    resolution: {integrity: sha512-kak9SuekxW9J7OnnrGUgkMI7huUxhhCu+u60XFcFPMaB8NGpQRYMCIIs0SjB+1zrrPAQglaapVc+VB4rNJwNpw==, tarball: https://europe-west2-npm.pkg.dev/christopher-little-dev/npm-packages/@progression-labs-development/infra/-/@progression-labs-development/infra-0.0.2.tgz}
 
   '@protobufjs/aspromise@1.1.2':
     resolution: {integrity: sha512-j+gKExEuLmKwvz3OgROXtrJ2UG2x8Ch2YZUxahh+s1F2HZ+wAceUNLkvy6zKCPVRkU++ZWQrdxsUeQXmcg4uoQ==}
@@ -5068,7 +5068,7 @@ snapshots:
   '@pkgjs/parseargs@0.11.0':
     optional: true
 
-  '@progression-labs-development/infra@0.0.1(typescript@5.9.3)':
+  '@progression-labs-development/infra@0.0.2(typescript@5.9.3)':
     dependencies:
       '@pulumi/aws': 6.83.2(typescript@5.9.3)
       '@pulumi/azure-native': 2.92.0(typescript@5.9.3)
