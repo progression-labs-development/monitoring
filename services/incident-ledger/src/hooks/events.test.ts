@@ -6,6 +6,7 @@ const TEST_INCIDENT: Incident = {
   domain: "security",
   type: "secret_committed",
   severity: "critical",
+  fingerprint: null,
   observed: {},
   expected: {},
   delta: {},

@@ -31,6 +31,7 @@ export interface Incident {
   domain: IncidentDomain;
   type: IncidentType;
   severity: IncidentSeverity;
+  fingerprint: string | null;
   observed: Record<string, unknown>;
   expected: Record<string, unknown>;
   delta: Record<string, unknown>;

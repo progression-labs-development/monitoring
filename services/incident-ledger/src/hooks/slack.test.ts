@@ -11,6 +11,7 @@ function makeEvent(overrides: Partial<IncidentEvent["incident"]> = {}): Incident
       domain: "infrastructure",
       type: "rogue_resource",
       severity: "critical",
+      fingerprint: null,
       observed: {},
       expected: {},
       delta: {},

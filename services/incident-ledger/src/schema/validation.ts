@@ -8,6 +8,7 @@ export const createIncidentSchema = z.object({
   domain: z.enum(domains),
   type: z.enum(types),
   severity: z.enum(severities),
+  fingerprint: z.string().optional(),
   observed: z.record(z.unknown()).optional(),
   expected: z.record(z.unknown()).optional(),
   delta: z.record(z.unknown()).optional(),
@@ -20,6 +21,7 @@ export const createIncidentSchema = z.object({
 export const listIncidentsSchema = z.object({
   status: z.enum(["open", "claimed", "remediated", "escalated"]).optional(),
   domain: z.enum(domains).optional(),
+  type: z.enum(types).optional(),
   severity: z.enum(severities).optional(),
   limit: z.coerce.number().int().min(1).max(200).optional(),
   offset: z.coerce.number().int().min(0).optional(),

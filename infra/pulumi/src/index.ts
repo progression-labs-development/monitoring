@@ -3,6 +3,7 @@ import * as random from "@pulumi/random";
 import { createSecret, defineConfig } from "@progression-labs-development/infra";
 import { createSignoz } from "./components/signoz";
 import { createIncidentLedger } from "./components/incident-ledger";
+import { createEnforcementDetector } from "./components/enforcement-detector";
 
 // Configure for GCP
 defineConfig({
@@ -49,6 +50,17 @@ const incidentLedger = createIncidentLedger("incident-ledger", {
 });
 
 // =============================================================================
+// Enforcement Detector — Scheduled Rogue Resource Scanner
+// =============================================================================
+// Cloud Run (scale-to-zero) + GCS (expected-state) + Cloud Scheduler (every 10 min)
+// Enumerates live AWS/GCP resources, compares against Pulumi state, creates incidents
+
+const enforcementDetector = createEnforcementDetector("enforcement-detector", {
+  image: "europe-west2-docker.pkg.dev/christopher-little-dev/enforcement-detector/app:latest",
+  incidentLedgerUrl: incidentLedger.container.url,
+});
+
+// =============================================================================
 // Secrets
 // =============================================================================
 
@@ -76,6 +88,9 @@ export const signozPublicIp = signoz.publicIp;
 
 export const incidentLedgerUrl = incidentLedger.container.url;
 export const incidentLedgerDbEndpoint = incidentLedger.db.endpoint;
+
+export const enforcementDetectorUrl = enforcementDetector.container.url;
+export const enforcementStateBucket = enforcementDetector.bucket.bucketName;
 
 export const instructions = pulumi.output(`
 ================================================================================

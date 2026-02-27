@@ -1,10 +1,11 @@
 import type { Pool } from "pg";
-import type { Incident, IncidentDomain, IncidentSeverity, IncidentStatus } from "../types";
+import type { Incident, IncidentDomain, IncidentSeverity, IncidentStatus, IncidentType } from "../types";
 
 export interface CreateIncidentInput {
   domain: string;
   type: string;
   severity: string;
+  fingerprint?: string;
   observed?: Record<string, unknown>;
   expected?: Record<string, unknown>;
   delta?: Record<string, unknown>;
@@ -16,13 +17,14 @@ export interface CreateIncidentInput {
 
 export async function insertIncident(pool: Pool, input: CreateIncidentInput): Promise<Incident> {
   const { rows } = await pool.query(
-    `INSERT INTO incidents (domain, type, severity, observed, expected, delta, resource, actor, permitted_actions, constraints)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+    `INSERT INTO incidents (domain, type, severity, fingerprint, observed, expected, delta, resource, actor, permitted_actions, constraints)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
      RETURNING *`,
     [
       input.domain,
       input.type,
       input.severity,
+      input.fingerprint ?? null,
       JSON.stringify(input.observed ?? {}),
       JSON.stringify(input.expected ?? {}),
       JSON.stringify(input.delta ?? {}),
@@ -38,6 +40,7 @@ export async function insertIncident(pool: Pool, input: CreateIncidentInput): Pr
 export interface ListIncidentsFilter {
   status?: IncidentStatus;
   domain?: IncidentDomain;
+  type?: IncidentType;
   severity?: IncidentSeverity;
   limit?: number;
   offset?: number;
@@ -55,6 +58,10 @@ export async function listIncidents(pool: Pool, filter: ListIncidentsFilter): Pr
   if (filter.domain) {
     conditions.push(`domain = $${idx++}`);
     params.push(filter.domain);
+  }
+  if (filter.type) {
+    conditions.push(`type = $${idx++}`);
+    params.push(filter.type);
   }
   if (filter.severity) {
     conditions.push(`severity = $${idx++}`);
