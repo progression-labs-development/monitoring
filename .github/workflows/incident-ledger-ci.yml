@@ -35,10 +35,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: progression-labs-development/github-actions/typescript-test@main
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
         with:
-          working-directory: services/incident-ledger
-          test-command: pnpm test
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: services/incident-ledger/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+        working-directory: services/incident-ledger
+      - run: pnpm test
+        working-directory: services/incident-ledger
 
   docker-build:
     name: Docker Build

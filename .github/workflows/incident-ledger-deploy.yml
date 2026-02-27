@@ -48,6 +48,7 @@ jobs:
         run: |
           gcloud run services update incident-ledger \
             --image=${{ env.IMAGE }}:${{ github.sha }} \
+            --port=3000 \
             --region=${{ env.REGION }} \
             --project=${{ env.GCP_PROJECT }}
 
