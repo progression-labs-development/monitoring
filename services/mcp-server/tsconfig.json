@@ -1,5 +1,8 @@
 {
   "compilerOptions": {
+    "target": "ES2022",
+    "module": "CommonJS",
+    "moduleResolution": "node",
     "strict": true,
     "noImplicitAny": true,
     "strictNullChecks": true,
@@ -8,13 +11,11 @@
     "noFallthroughCasesInSwitch": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "outDir": "dist",
+    "rootDir": "src",
+    "declaration": true
   },
-  "files": [],
-  "references": [
-    { "path": "./infra/pulumi" },
-    { "path": "./services/incident-ledger" },
-    { "path": "./services/enforcement-detector" },
-    { "path": "./services/mcp-server" }
-  ]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
 }
