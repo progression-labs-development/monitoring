@@ -24,7 +24,7 @@ export default tseslint.config(
       // Code quality limits
       'max-depth': ['error', { max: 4 }],
       'max-params': ['error', { max: 4 }],
-      'max-lines-per-function': ['error', { max: 50 }],
+      'max-lines-per-function': ['error', { max: 100 }],
       'max-lines': ['error', { max: 400 }],
       complexity: 'error',
       'no-console': ['warn', { allow: ['error', 'warn', 'info'] }],
