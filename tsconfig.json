@@ -15,6 +15,7 @@
     { "path": "./infra/pulumi" },
     { "path": "./services/incident-ledger" },
     { "path": "./services/enforcement-detector" },
-    { "path": "./services/mcp-server" }
+    { "path": "./services/mcp-server" },
+    { "path": "./services/secret-detector" }
   ]
 }

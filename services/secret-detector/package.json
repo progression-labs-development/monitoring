@@ -1,0 +1,28 @@
+{
+  "name": "secret-detector",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Detects accidentally committed secrets by scanning GitHub push webhooks",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx watch src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@octokit/auth-app": "^7.1.0",
+    "@octokit/rest": "^21.0.0",
+    "@hono/node-server": "^1.13.7",
+    "hono": "^4.6.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.33",
+    "tsx": "^4.19.0",
+    "typescript": "^5.9.3",
+    "vitest": "^2.1.9"
+  }
+}

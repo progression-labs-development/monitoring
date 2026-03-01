@@ -7,7 +7,7 @@ registry = "github:progression-labs-development/standards"
 rulesets = ["typescript-internal"]
 
 [code.linting.eslint]
-files = ["infra/pulumi/src/**/*.ts", "services/enforcement-detector/src/**/*.ts", "services/mcp-server/src/**/*.ts"]
+files = ["infra/pulumi/src/**/*.ts", "services/enforcement-detector/src/**/*.ts", "services/mcp-server/src/**/*.ts", "services/secret-detector/src/**/*.ts"]
 
 [code.naming]
 rules = [
