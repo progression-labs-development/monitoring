@@ -48,7 +48,8 @@ jobs:
         id: secrets
         run: |
           INCIDENT_LEDGER_URL=$(gcloud run services describe monitoring-incident-ledger-container-dev \
-            --region=${{ env.REGION }} --project=${{ env.GCP_PROJECT }} --format='value(status.url)')
+            --region=${{ env.REGION }} --project=${{ env.GCP_PROJECT }} --format='json(metadata.annotations)' \
+            | jq -r '.metadata.annotations["run.googleapis.com/urls"]' | jq -r '.[0]')
           WEBHOOK_SECRET=$(gcloud secrets versions access latest \
             --secret=monitoring-alert-receiver-webhook-secret-secret-dev \
             --project=${{ env.GCP_PROJECT }})
