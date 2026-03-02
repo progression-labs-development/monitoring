@@ -15,9 +15,9 @@ RULES_DIR="$SCRIPT_DIR/../services/alert-receiver/alert-rules"
 
 GCP_PROJECT="christopher-little-dev"
 ADMIN_SECRET="monitoring-signoz-admin-credentials-secret-dev"
-WEBHOOK_SECRET_NAME="monitoring-alert-receiver-webhook-secret-dev"
+WEBHOOK_SECRET_NAME="monitoring-alert-receiver-webhook-secret-secret-dev"
 CLOUD_RUN_SERVICE="alert-receiver"
-CLOUD_RUN_REGION="us-central1"
+CLOUD_RUN_REGION="europe-west2"
 CHANNEL_NAME="alert-receiver"
 
 # --- Helpers ---
@@ -127,14 +127,20 @@ CHANNEL_PAYLOAD=$(jq -n \
   --arg secret "$WEBHOOK_SECRET" \
   '{
     name: $name,
-    type: "webhook",
-    webhook_url: $url,
-    webhook_headers: { "Authorization": ("Bearer " + $secret) }
+    webhook_configs: [{
+      send_resolved: true,
+      url: $url,
+      http_config: {
+        authorization: {
+          type: "Bearer",
+          credentials: $secret
+        }
+      }
+    }]
   }')
 
 if [ -n "$EXISTING_CHANNEL_ID" ]; then
   info "  Updating existing channel (id=$EXISTING_CHANNEL_ID)..."
-  CHANNEL_PAYLOAD=$(echo "$CHANNEL_PAYLOAD" | jq --arg id "$EXISTING_CHANNEL_ID" '. + {id: ($id | tonumber)}')
   api PUT "/api/v1/channels/$EXISTING_CHANNEL_ID" -d "$CHANNEL_PAYLOAD" >/dev/null \
     || fail "Could not update notification channel"
   CHANNEL_ID="$EXISTING_CHANNEL_ID"
@@ -165,10 +171,10 @@ for rule_file in "$RULES_DIR"/*.json; do
   RULE_NAME=$(jq -r '.alert' "$rule_file")
   info "  Processing rule: $RULE_NAME"
 
-  # Inject the notification channel into the rule
+  # Inject the notification channel and API version into the rule
   RULE_PAYLOAD=$(jq \
     --arg channel "$CHANNEL_NAME" \
-    '. + { preferredChannels: [$channel] } | del(._comment)' \
+    '. + { preferredChannels: [$channel], version: "v5" } | del(._comment)' \
     "$rule_file")
 
   # Check if rule already exists by name
@@ -178,7 +184,7 @@ for rule_file in "$RULES_DIR"/*.json; do
 
   if [ -n "$EXISTING_RULE_ID" ]; then
     info "    Updating existing rule (id=$EXISTING_RULE_ID)..."
-    RULE_PAYLOAD=$(echo "$RULE_PAYLOAD" | jq --arg id "$EXISTING_RULE_ID" '. + {id: ($id | tonumber)}')
+    RULE_PAYLOAD=$(echo "$RULE_PAYLOAD" | jq --arg id "$EXISTING_RULE_ID" '. + {id: $id}')
     api PUT "/api/v1/rules/$EXISTING_RULE_ID" -d "$RULE_PAYLOAD" >/dev/null \
       || { echo "WARN: Failed to update rule '$RULE_NAME'" >&2; continue; }
     UPDATED=$((UPDATED + 1))
