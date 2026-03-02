@@ -1,0 +1,58 @@
+name: Usage Aggregator CI
+
+on:
+  push:
+    paths:
+      - 'services/usage-aggregator/**'
+      - '.github/workflows/usage-aggregator-ci.yml'
+  pull_request:
+    paths:
+      - 'services/usage-aggregator/**'
+      - '.github/workflows/usage-aggregator-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  typecheck:
+    name: Typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: services/usage-aggregator/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+        working-directory: services/usage-aggregator
+      - run: pnpm typecheck
+        working-directory: services/usage-aggregator
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: services/usage-aggregator/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+        working-directory: services/usage-aggregator
+      - run: pnpm test
+        working-directory: services/usage-aggregator
+
+  docker-build:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: services/usage-aggregator
+          push: false

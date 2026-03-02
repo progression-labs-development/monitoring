@@ -17,6 +17,10 @@
     { "path": "./services/enforcement-detector" },
     { "path": "./services/mcp-server" },
     { "path": "./services/secret-detector" },
-    { "path": "./services/alert-receiver" }
+    { "path": "./services/alert-receiver" },
+    { "path": "./services/incident-enrichment" },
+    { "path": "./services/rogue-resource-detector" },
+    { "path": "./services/standards-violation-detector" },
+    { "path": "./services/usage-aggregator" }
   ]
 }
