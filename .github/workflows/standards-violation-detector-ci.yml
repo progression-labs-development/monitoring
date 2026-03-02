@@ -1,0 +1,58 @@
+name: Standards Violation Detector CI
+
+on:
+  push:
+    paths:
+      - 'services/standards-violation-detector/**'
+      - '.github/workflows/standards-violation-detector-ci.yml'
+  pull_request:
+    paths:
+      - 'services/standards-violation-detector/**'
+      - '.github/workflows/standards-violation-detector-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  typecheck:
+    name: Typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: services/standards-violation-detector/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+        working-directory: services/standards-violation-detector
+      - run: pnpm typecheck
+        working-directory: services/standards-violation-detector
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: services/standards-violation-detector/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+        working-directory: services/standards-violation-detector
+      - run: pnpm test
+        working-directory: services/standards-violation-detector
+
+  docker-build:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: services/standards-violation-detector
+          push: false
