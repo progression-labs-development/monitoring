@@ -1,10 +1,10 @@
 [metadata]
 project = "monitoring"
-tier = "internal"
+tier = "production"
 
 [extends]
 registry = "github:progression-labs-development/standards"
-rulesets = ["typescript-internal"]
+rulesets = ["typescript-production"]
 
 [code.linting.eslint]
 files = ["infra/pulumi/src/**/*.ts", "services/enforcement-detector/src/**/*.ts", "services/mcp-server/src/**/*.ts", "services/secret-detector/src/**/*.ts", "services/alert-receiver/src/**/*.ts"]
