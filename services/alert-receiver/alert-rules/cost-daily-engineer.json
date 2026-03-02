@@ -1,0 +1,42 @@
+{
+  "_comment": "Alert when a single engineer's daily spend exceeds $30 (#31)",
+  "alert": "cost_daily_engineer",
+  "alertType": "METRIC_BASED_ALERT",
+  "ruleType": "threshold_rule",
+  "condition": {
+    "compositeQuery": {
+      "builderQueries": {
+        "A": {
+          "aggregateOperator": "sum",
+          "dataSource": "metrics",
+          "queryName": "A",
+          "aggregateAttribute": {
+            "key": "session.cost.total",
+            "type": "Gauge"
+          },
+          "filters": {
+            "items": [],
+            "op": "AND"
+          },
+          "groupBy": [
+            { "key": "engineer.id" }
+          ]
+        }
+      },
+      "queryType": "builder"
+    },
+    "op": "1",
+    "target": 30.0,
+    "matchType": "1"
+  },
+  "labels": {
+    "domain": "cost",
+    "severity": "warning"
+  },
+  "annotations": {
+    "description": "Engineer daily spend exceeded $30 threshold",
+    "summary": "High daily spend by individual engineer"
+  },
+  "evalWindow": "24h0m0s",
+  "frequency": "1h0m0s"
+}

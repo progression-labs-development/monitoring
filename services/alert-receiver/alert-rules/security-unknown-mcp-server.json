@@ -1,6 +1,6 @@
 {
-  "_comment": "Reference alert rule — apply to SigNoz after telemetry is flowing (#29)",
-  "alert": "reliability_missing_telemetry",
+  "_comment": "Alert when an agent calls an unknown/unapproved MCP server (#31)",
+  "alert": "security_unknown_mcp_server",
   "alertType": "METRIC_BASED_ALERT",
   "ruleType": "threshold_rule",
   "condition": {
@@ -15,25 +15,31 @@
             "type": "string"
           },
           "filters": {
-            "items": [],
+            "items": [
+              {
+                "key": { "key": "mcp.server.unknown", "type": "tag" },
+                "op": "=",
+                "value": "true"
+              }
+            ],
             "op": "AND"
           }
         }
       },
       "queryType": "builder"
     },
-    "op": "3",
+    "op": "1",
     "target": 1,
     "matchType": "1"
   },
   "labels": {
-    "domain": "reliability",
-    "severity": "warning"
+    "domain": "security",
+    "severity": "critical"
   },
   "annotations": {
-    "description": "No telemetry data received for 24 hours",
-    "summary": "Telemetry pipeline may be down"
+    "description": "An agent invoked an unknown or unapproved MCP server",
+    "summary": "Unknown MCP server call detected"
   },
-  "evalWindow": "24h0m0s",
-  "frequency": "1h0m0s"
+  "evalWindow": "5m0s",
+  "frequency": "1m0s"
 }

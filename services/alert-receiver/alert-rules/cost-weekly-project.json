@@ -1,0 +1,42 @@
+{
+  "_comment": "Alert when weekly project spend exceeds $200 (#31)",
+  "alert": "cost_weekly_project",
+  "alertType": "METRIC_BASED_ALERT",
+  "ruleType": "threshold_rule",
+  "condition": {
+    "compositeQuery": {
+      "builderQueries": {
+        "A": {
+          "aggregateOperator": "sum",
+          "dataSource": "metrics",
+          "queryName": "A",
+          "aggregateAttribute": {
+            "key": "session.cost.total",
+            "type": "Gauge"
+          },
+          "filters": {
+            "items": [],
+            "op": "AND"
+          },
+          "groupBy": [
+            { "key": "project.name" }
+          ]
+        }
+      },
+      "queryType": "builder"
+    },
+    "op": "1",
+    "target": 200.0,
+    "matchType": "1"
+  },
+  "labels": {
+    "domain": "cost",
+    "severity": "warning"
+  },
+  "annotations": {
+    "description": "Weekly project spend exceeded $200 threshold",
+    "summary": "High weekly spend for project"
+  },
+  "evalWindow": "168h0m0s",
+  "frequency": "6h0m0s"
+}

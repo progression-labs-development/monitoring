@@ -1,0 +1,45 @@
+{
+  "_comment": "Alert when an agent attempts to access sensitive files (#31)",
+  "alert": "security_sensitive_file_access",
+  "alertType": "METRIC_BASED_ALERT",
+  "ruleType": "threshold_rule",
+  "condition": {
+    "compositeQuery": {
+      "builderQueries": {
+        "A": {
+          "aggregateOperator": "count",
+          "dataSource": "traces",
+          "queryName": "A",
+          "aggregateAttribute": {
+            "key": "traceID",
+            "type": "string"
+          },
+          "filters": {
+            "items": [
+              {
+                "key": { "key": "file.sensitive_access", "type": "tag" },
+                "op": "=",
+                "value": "true"
+              }
+            ],
+            "op": "AND"
+          }
+        }
+      },
+      "queryType": "builder"
+    },
+    "op": "1",
+    "target": 1,
+    "matchType": "1"
+  },
+  "labels": {
+    "domain": "security",
+    "severity": "critical"
+  },
+  "annotations": {
+    "description": "An agent attempted to access a sensitive file (e.g., .env, credentials)",
+    "summary": "Sensitive file access attempt detected"
+  },
+  "evalWindow": "5m0s",
+  "frequency": "1m0s"
+}

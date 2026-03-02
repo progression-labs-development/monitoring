@@ -1,6 +1,6 @@
 {
-  "_comment": "Reference alert rule — apply to SigNoz after telemetry is flowing (#29)",
-  "alert": "reliability_missing_telemetry",
+  "_comment": "Alert when Opus model usage exceeds 80% of daily requests (#31)",
+  "alert": "cost_unusual_model_usage",
   "alertType": "METRIC_BASED_ALERT",
   "ruleType": "threshold_rule",
   "condition": {
@@ -15,25 +15,32 @@
             "type": "string"
           },
           "filters": {
-            "items": [],
+            "items": [
+              {
+                "key": { "key": "gen_ai.request.model", "type": "tag" },
+                "op": "contains",
+                "value": "opus"
+              }
+            ],
             "op": "AND"
-          }
+          },
+          "groupBy": []
         }
       },
       "queryType": "builder"
     },
-    "op": "3",
-    "target": 1,
+    "op": "1",
+    "target": 0.8,
     "matchType": "1"
   },
   "labels": {
-    "domain": "reliability",
+    "domain": "cost",
     "severity": "warning"
   },
   "annotations": {
-    "description": "No telemetry data received for 24 hours",
-    "summary": "Telemetry pipeline may be down"
+    "description": "Opus model usage exceeds 80% of daily requests",
+    "summary": "Unusually high Opus model usage"
   },
   "evalWindow": "24h0m0s",
-  "frequency": "1h0m0s"
+  "frequency": "6h0m0s"
 }

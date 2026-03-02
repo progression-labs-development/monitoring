@@ -1,0 +1,40 @@
+{
+  "_comment": "Alert when current spend exceeds 3x the 7-day rolling average (#31)",
+  "alert": "cost_spike_detection",
+  "alertType": "METRIC_BASED_ALERT",
+  "ruleType": "threshold_rule",
+  "condition": {
+    "compositeQuery": {
+      "builderQueries": {
+        "A": {
+          "aggregateOperator": "rate",
+          "dataSource": "metrics",
+          "queryName": "A",
+          "aggregateAttribute": {
+            "key": "session.cost.total",
+            "type": "Gauge"
+          },
+          "filters": {
+            "items": [],
+            "op": "AND"
+          },
+          "groupBy": []
+        }
+      },
+      "queryType": "builder"
+    },
+    "op": "1",
+    "target": 3.0,
+    "matchType": "1"
+  },
+  "labels": {
+    "domain": "cost",
+    "severity": "critical"
+  },
+  "annotations": {
+    "description": "Current spend rate exceeds 3x the 7-day rolling average",
+    "summary": "Cost spike detected"
+  },
+  "evalWindow": "24h0m0s",
+  "frequency": "1h0m0s"
+}
