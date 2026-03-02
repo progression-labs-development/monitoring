@@ -1,0 +1,39 @@
+{
+  "_comment": "Reference alert rule — apply to SigNoz after telemetry is flowing (#29)",
+  "alert": "reliability_missing_telemetry",
+  "alertType": "METRIC_BASED_ALERT",
+  "ruleType": "threshold_rule",
+  "condition": {
+    "compositeQuery": {
+      "builderQueries": {
+        "A": {
+          "aggregateOperator": "count",
+          "dataSource": "traces",
+          "queryName": "A",
+          "aggregateAttribute": {
+            "key": "traceID",
+            "type": "string"
+          },
+          "filters": {
+            "items": [],
+            "op": "AND"
+          }
+        }
+      },
+      "queryType": "builder"
+    },
+    "op": "3",
+    "target": 1,
+    "matchType": "1"
+  },
+  "labels": {
+    "domain": "reliability",
+    "severity": "warning"
+  },
+  "annotations": {
+    "description": "No telemetry data received for 15 minutes",
+    "summary": "Telemetry pipeline may be down"
+  },
+  "evalWindow": "15m0s",
+  "frequency": "5m0s"
+}

@@ -4,6 +4,7 @@ import { createSecret, defineConfig } from "@progression-labs-development/infra"
 import { createSignoz } from "./components/signoz";
 import { createIncidentLedger } from "./components/incident-ledger";
 import { createEnforcementDetector } from "./components/enforcement-detector";
+import { createAlertReceiver } from "./components/alert-receiver";
 
 // Configure for GCP
 defineConfig({
@@ -61,6 +62,23 @@ const enforcementDetector = createEnforcementDetector("enforcement-detector", {
 });
 
 // =============================================================================
+// Alert Receiver — SigNoz Alert Webhook → Incident Ledger
+// =============================================================================
+// Cloud Run (scale-to-zero, public) — receives SigNoz alert webhooks,
+// maps them to incident-ledger format, creates/resolves incidents
+
+const alertReceiverWebhookSecret = new random.RandomPassword("alert-receiver-webhook-secret", {
+  length: 32,
+  special: false,
+});
+
+const alertReceiver = createAlertReceiver("alert-receiver", {
+  image: "europe-west2-docker.pkg.dev/christopher-little-dev/alert-receiver/app:latest",
+  incidentLedgerUrl: incidentLedger.container.url,
+  webhookSecret: alertReceiverWebhookSecret.result,
+});
+
+// =============================================================================
 // Secrets
 // =============================================================================
 
@@ -91,6 +109,8 @@ export const incidentLedgerDbEndpoint = incidentLedger.db.endpoint;
 
 export const enforcementDetectorUrl = enforcementDetector.container.url;
 export const enforcementStateBucket = enforcementDetector.bucket.bucketName;
+
+export const alertReceiverUrl = alertReceiver.container.url;
 
 export const instructions = pulumi.output(`
 ================================================================================

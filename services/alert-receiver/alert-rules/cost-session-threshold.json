@@ -1,0 +1,42 @@
+{
+  "_comment": "Reference alert rule — apply to SigNoz after telemetry is flowing (#29)",
+  "alert": "cost_session_threshold",
+  "alertType": "METRIC_BASED_ALERT",
+  "ruleType": "threshold_rule",
+  "condition": {
+    "compositeQuery": {
+      "builderQueries": {
+        "A": {
+          "aggregateOperator": "max",
+          "dataSource": "metrics",
+          "queryName": "A",
+          "aggregateAttribute": {
+            "key": "session.cost.total",
+            "type": "Gauge"
+          },
+          "filters": {
+            "items": [],
+            "op": "AND"
+          },
+          "groupBy": [
+            { "key": "session.id" }
+          ]
+        }
+      },
+      "queryType": "builder"
+    },
+    "op": "1",
+    "target": 5.0,
+    "matchType": "1"
+  },
+  "labels": {
+    "domain": "cost",
+    "severity": "warning"
+  },
+  "annotations": {
+    "description": "Session cost exceeded $5 threshold",
+    "summary": "High-cost agent session detected"
+  },
+  "evalWindow": "5m0s",
+  "frequency": "1m0s"
+}

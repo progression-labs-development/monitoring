@@ -16,6 +16,7 @@
     { "path": "./services/incident-ledger" },
     { "path": "./services/enforcement-detector" },
     { "path": "./services/mcp-server" },
-    { "path": "./services/secret-detector" }
+    { "path": "./services/secret-detector" },
+    { "path": "./services/alert-receiver" }
   ]
 }

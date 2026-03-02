@@ -9,7 +9,8 @@ export type IncidentType =
   | "rogue_resource"
   | "drift"
   | "secret_committed"
-  | "standards_violation";
+  | "standards_violation"
+  | "alert_triggered";
 
 export type IncidentSeverity = "critical" | "high" | "medium" | "low";
 

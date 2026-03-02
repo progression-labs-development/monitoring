@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 const domains = ["infrastructure", "security", "cost", "reliability", "standards"] as const;
-const types = ["rogue_resource", "drift", "secret_committed", "standards_violation"] as const;
+const types = ["rogue_resource", "drift", "secret_committed", "standards_violation", "alert_triggered"] as const;
 const severities = ["critical", "high", "medium", "low"] as const;
 
 export const createIncidentSchema = z.object({

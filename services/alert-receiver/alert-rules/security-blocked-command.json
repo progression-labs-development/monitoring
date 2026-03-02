@@ -1,0 +1,45 @@
+{
+  "_comment": "Reference alert rule — apply to SigNoz after telemetry is flowing (#29)",
+  "alert": "security_blocked_command",
+  "alertType": "METRIC_BASED_ALERT",
+  "ruleType": "threshold_rule",
+  "condition": {
+    "compositeQuery": {
+      "builderQueries": {
+        "A": {
+          "aggregateOperator": "count",
+          "dataSource": "traces",
+          "queryName": "A",
+          "aggregateAttribute": {
+            "key": "traceID",
+            "type": "string"
+          },
+          "filters": {
+            "items": [
+              {
+                "key": { "key": "command.blocked", "type": "tag" },
+                "op": "=",
+                "value": "true"
+              }
+            ],
+            "op": "AND"
+          }
+        }
+      },
+      "queryType": "builder"
+    },
+    "op": "1",
+    "target": 1,
+    "matchType": "1"
+  },
+  "labels": {
+    "domain": "security",
+    "severity": "critical"
+  },
+  "annotations": {
+    "description": "A blocked command was detected in an agent session",
+    "summary": "Blocked command execution attempt"
+  },
+  "evalWindow": "5m0s",
+  "frequency": "1m0s"
+}
