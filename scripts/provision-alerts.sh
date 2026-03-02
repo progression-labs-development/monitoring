@@ -62,11 +62,14 @@ info "SigNoz URL: $URL"
 
 if [ -z "$WEBHOOK_URL" ]; then
   info "Fetching alert-receiver Cloud Run URL..."
+  # Use the new-format *.run.app URL (first entry in the urls annotation)
   WEBHOOK_URL=$(gcloud run services describe "$CLOUD_RUN_SERVICE" \
     --region="$CLOUD_RUN_REGION" \
     --project="$GCP_PROJECT" \
-    --format='value(status.url)' 2>/dev/null) || fail "Could not fetch Cloud Run URL for '$CLOUD_RUN_SERVICE'"
-  [ -n "$WEBHOOK_URL" ] || fail "Cloud Run service '$CLOUD_RUN_SERVICE' has no URL"
+    --format='json(metadata.annotations)' 2>/dev/null \
+    | jq -r '.metadata.annotations["run.googleapis.com/urls"]' \
+    | jq -r '.[0]') || fail "Could not fetch Cloud Run URL for '$CLOUD_RUN_SERVICE'"
+  [ -n "$WEBHOOK_URL" ] && [ "$WEBHOOK_URL" != "null" ] || fail "Cloud Run service '$CLOUD_RUN_SERVICE' has no URL"
 fi
 
 WEBHOOK_URL="${WEBHOOK_URL%/}/webhook"
