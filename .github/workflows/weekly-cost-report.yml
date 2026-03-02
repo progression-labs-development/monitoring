@@ -1,0 +1,42 @@
+name: Weekly Cost Report
+
+on:
+  schedule:
+    # Every Friday at 6pm UTC
+    - cron: '0 18 * * 5'
+  workflow_dispatch:
+    inputs:
+      slack_webhook_url:
+        description: 'Override Slack webhook URL (optional)'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  report:
+    name: Generate and post weekly cost report
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: google-github-actions/auth@v2
+        id: gcp-auth
+        with:
+          workload_identity_provider: projects/10492061315/locations/global/workloadIdentityPools/github-pool/providers/github-provider
+          service_account: github-actions@christopher-little-dev.iam.gserviceaccount.com
+          token_format: 'access_token'
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq jq bc
+
+      - name: Generate and post cost report
+        env:
+          GCP_PROJECT: christopher-little-dev
+          ADMIN_SECRET: monitoring-signoz-admin-credentials-secret-dev
+          SLACK_WEBHOOK_URL: ${{ inputs.slack_webhook_url || secrets.SLACK_COST_REPORT_WEBHOOK_URL }}
+        run: bash scripts/weekly-cost-report.sh

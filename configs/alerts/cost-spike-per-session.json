@@ -1,0 +1,44 @@
+{
+  "_comment": "Alert when a single Claude Code session exceeds $5 in cost",
+  "alert": "cost_spike_per_session",
+  "alertType": "METRIC_BASED_ALERT",
+  "ruleType": "threshold_rule",
+  "condition": {
+    "compositeQuery": {
+      "builderQueries": {
+        "A": {
+          "aggregateOperator": "max",
+          "dataSource": "metrics",
+          "queryName": "A",
+          "aggregateAttribute": {
+            "key": "session.cost.total",
+            "type": "Gauge"
+          },
+          "filters": {
+            "items": [],
+            "op": "AND"
+          },
+          "groupBy": [
+            { "key": "session.id" },
+            { "key": "engineer" }
+          ]
+        }
+      },
+      "queryType": "builder"
+    },
+    "op": "1",
+    "target": 5.0,
+    "matchType": "1"
+  },
+  "labels": {
+    "domain": "cost",
+    "severity": "warning"
+  },
+  "annotations": {
+    "description": "A single Claude Code session has exceeded the $5 cost threshold. Session ID: {{$labels.session_id}}, Engineer: {{$labels.engineer}}",
+    "summary": "High-cost session detected (>$5)"
+  },
+  "evalWindow": "5m0s",
+  "frequency": "1m0s",
+  "preferredChannels": ["alert-receiver"]
+}

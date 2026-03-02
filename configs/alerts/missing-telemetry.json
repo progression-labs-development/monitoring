@@ -1,0 +1,49 @@
+{
+  "_comment": "Alert when no telemetry data is received from an engineer in 24 hours",
+  "alert": "reliability_missing_telemetry",
+  "alertType": "METRIC_BASED_ALERT",
+  "ruleType": "threshold_rule",
+  "condition": {
+    "compositeQuery": {
+      "builderQueries": {
+        "A": {
+          "aggregateOperator": "count",
+          "dataSource": "traces",
+          "queryName": "A",
+          "aggregateAttribute": {
+            "key": "traceID",
+            "type": "string"
+          },
+          "filters": {
+            "items": [
+              {
+                "key": { "key": "service.name", "type": "resource" },
+                "op": "=",
+                "value": "claude-code"
+              }
+            ],
+            "op": "AND"
+          },
+          "groupBy": [
+            { "key": "engineer" }
+          ]
+        }
+      },
+      "queryType": "builder"
+    },
+    "op": "3",
+    "target": 1,
+    "matchType": "1"
+  },
+  "labels": {
+    "domain": "reliability",
+    "severity": "warning"
+  },
+  "annotations": {
+    "description": "No Claude Code telemetry received from engineer {{$labels.engineer}} in the last 24 hours. Their telemetry hook may be misconfigured or disabled.",
+    "summary": "Missing telemetry from engineer (24h)"
+  },
+  "evalWindow": "24h0m0s",
+  "frequency": "6h0m0s",
+  "preferredChannels": ["alert-receiver"]
+}

@@ -1,0 +1,50 @@
+{
+  "_comment": "Alert immediately when any PreToolUse hook rejects a command",
+  "alert": "security_blocked_command",
+  "alertType": "METRIC_BASED_ALERT",
+  "ruleType": "threshold_rule",
+  "condition": {
+    "compositeQuery": {
+      "builderQueries": {
+        "A": {
+          "aggregateOperator": "count",
+          "dataSource": "traces",
+          "queryName": "A",
+          "aggregateAttribute": {
+            "key": "traceID",
+            "type": "string"
+          },
+          "filters": {
+            "items": [
+              {
+                "key": { "key": "command.blocked", "type": "tag" },
+                "op": "=",
+                "value": "true"
+              }
+            ],
+            "op": "AND"
+          },
+          "groupBy": [
+            { "key": "engineer" },
+            { "key": "command.name" }
+          ]
+        }
+      },
+      "queryType": "builder"
+    },
+    "op": "1",
+    "target": 1,
+    "matchType": "1"
+  },
+  "labels": {
+    "domain": "security",
+    "severity": "critical"
+  },
+  "annotations": {
+    "description": "A PreToolUse hook rejected a command execution. Engineer: {{$labels.engineer}}, Command: {{$labels.command_name}}. Investigate immediately.",
+    "summary": "Blocked command execution detected"
+  },
+  "evalWindow": "5m0s",
+  "frequency": "1m0s",
+  "preferredChannels": ["alert-receiver"]
+}

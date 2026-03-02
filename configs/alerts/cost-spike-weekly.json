@@ -1,0 +1,43 @@
+{
+  "_comment": "Alert when weekly per-project spend exceeds $200",
+  "alert": "cost_spike_weekly_project",
+  "alertType": "METRIC_BASED_ALERT",
+  "ruleType": "threshold_rule",
+  "condition": {
+    "compositeQuery": {
+      "builderQueries": {
+        "A": {
+          "aggregateOperator": "sum",
+          "dataSource": "metrics",
+          "queryName": "A",
+          "aggregateAttribute": {
+            "key": "session.cost.total",
+            "type": "Gauge"
+          },
+          "filters": {
+            "items": [],
+            "op": "AND"
+          },
+          "groupBy": [
+            { "key": "project.name" }
+          ]
+        }
+      },
+      "queryType": "builder"
+    },
+    "op": "1",
+    "target": 200.0,
+    "matchType": "1"
+  },
+  "labels": {
+    "domain": "cost",
+    "severity": "warning"
+  },
+  "annotations": {
+    "description": "Project {{$labels.project_name}} has exceeded $200 in weekly Claude Code spend",
+    "summary": "High weekly spend by project (>$200/week)"
+  },
+  "evalWindow": "168h0m0s",
+  "frequency": "6h0m0s",
+  "preferredChannels": ["alert-receiver"]
+}

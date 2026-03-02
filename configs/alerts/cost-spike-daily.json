@@ -1,0 +1,43 @@
+{
+  "_comment": "Alert when a single engineer's daily spend exceeds $30",
+  "alert": "cost_spike_daily_engineer",
+  "alertType": "METRIC_BASED_ALERT",
+  "ruleType": "threshold_rule",
+  "condition": {
+    "compositeQuery": {
+      "builderQueries": {
+        "A": {
+          "aggregateOperator": "sum",
+          "dataSource": "metrics",
+          "queryName": "A",
+          "aggregateAttribute": {
+            "key": "session.cost.total",
+            "type": "Gauge"
+          },
+          "filters": {
+            "items": [],
+            "op": "AND"
+          },
+          "groupBy": [
+            { "key": "engineer" }
+          ]
+        }
+      },
+      "queryType": "builder"
+    },
+    "op": "1",
+    "target": 30.0,
+    "matchType": "1"
+  },
+  "labels": {
+    "domain": "cost",
+    "severity": "warning"
+  },
+  "annotations": {
+    "description": "Engineer {{$labels.engineer}} has exceeded $30 in daily Claude Code spend",
+    "summary": "High daily spend by engineer (>$30/day)"
+  },
+  "evalWindow": "24h0m0s",
+  "frequency": "1h0m0s",
+  "preferredChannels": ["alert-receiver"]
+}

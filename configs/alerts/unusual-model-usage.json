@@ -1,0 +1,79 @@
+{
+  "_comment": "Alert when Opus model usage exceeds 80% of an engineer's daily requests",
+  "alert": "cost_unusual_model_usage",
+  "alertType": "METRIC_BASED_ALERT",
+  "ruleType": "threshold_rule",
+  "condition": {
+    "compositeQuery": {
+      "builderQueries": {
+        "A": {
+          "aggregateOperator": "count",
+          "dataSource": "traces",
+          "queryName": "A",
+          "aggregateAttribute": {
+            "key": "traceID",
+            "type": "string"
+          },
+          "filters": {
+            "items": [
+              {
+                "key": { "key": "gen_ai.request.model", "type": "tag" },
+                "op": "contains",
+                "value": "opus"
+              }
+            ],
+            "op": "AND"
+          },
+          "groupBy": [
+            { "key": "engineer" }
+          ],
+          "expression": "A"
+        },
+        "B": {
+          "aggregateOperator": "count",
+          "dataSource": "traces",
+          "queryName": "B",
+          "aggregateAttribute": {
+            "key": "traceID",
+            "type": "string"
+          },
+          "filters": {
+            "items": [
+              {
+                "key": { "key": "gen_ai.request.model", "type": "tag" },
+                "op": "exists",
+                "value": ""
+              }
+            ],
+            "op": "AND"
+          },
+          "groupBy": [
+            { "key": "engineer" }
+          ],
+          "expression": "B"
+        },
+        "C": {
+          "queryName": "C",
+          "expression": "A / B",
+          "dataSource": "",
+          "aggregateOperator": ""
+        }
+      },
+      "queryType": "builder"
+    },
+    "op": "1",
+    "target": 0.8,
+    "matchType": "1"
+  },
+  "labels": {
+    "domain": "cost",
+    "severity": "warning"
+  },
+  "annotations": {
+    "description": "Engineer {{$labels.engineer}} used Opus for >80% of model requests today. This may indicate unnecessary use of the most expensive model tier.",
+    "summary": "Unusually high Opus model usage (>80% daily)"
+  },
+  "evalWindow": "24h0m0s",
+  "frequency": "6h0m0s",
+  "preferredChannels": ["alert-receiver"]
+}
