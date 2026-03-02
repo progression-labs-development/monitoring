@@ -21,12 +21,31 @@ export interface IncidentClient {
   resolveIncident(id: string, outcome: Record<string, unknown>): Promise<void>;
 }
 
+async function getIdToken(audience: string): Promise<string | null> {
+  const metadataUrl = `http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/identity?audience=${encodeURIComponent(audience)}`;
+  try {
+    const res = await fetch(metadataUrl, {
+      headers: { "Metadata-Flavor": "Google" },
+    });
+    if (!res.ok) return null;
+    return res.text();
+  } catch {
+    return null;
+  }
+}
+
+async function authHeaders(baseUrl: string): Promise<Record<string, string>> {
+  const token = await getIdToken(baseUrl);
+  if (token) return { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
+  return { "Content-Type": "application/json" };
+}
+
 export function createIncidentClient(baseUrl: string): IncidentClient {
   return {
     async createIncident(payload: IncidentPayload): Promise<IncidentResponse> {
       const res = await fetch(`${baseUrl}/incidents`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: await authHeaders(baseUrl),
         body: JSON.stringify(payload),
       });
       if (!res.ok) {
@@ -39,6 +58,7 @@ export function createIncidentClient(baseUrl: string): IncidentClient {
     async listOpenByType(type: string): Promise<IncidentResponse[]> {
       const res = await fetch(
         `${baseUrl}/incidents?status=open&type=${encodeURIComponent(type)}`,
+        { headers: await authHeaders(baseUrl) },
       );
       if (!res.ok) {
         throw new Error(`Failed to list incidents (${res.status})`);
@@ -50,7 +70,7 @@ export function createIncidentClient(baseUrl: string): IncidentClient {
     async resolveIncident(id: string, outcome: Record<string, unknown>): Promise<void> {
       const res = await fetch(`${baseUrl}/incidents/${encodeURIComponent(id)}/resolve`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: await authHeaders(baseUrl),
         body: JSON.stringify({ outcome, status: "remediated" }),
       });
       if (!res.ok) {

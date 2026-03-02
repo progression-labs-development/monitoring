@@ -44,13 +44,26 @@ jobs:
             ${{ env.IMAGE }}:latest
             ${{ env.IMAGE }}:${{ github.sha }}
 
+      - name: Fetch secrets for env vars
+        id: secrets
+        run: |
+          INCIDENT_LEDGER_URL=$(gcloud run services describe monitoring-incident-ledger-container-dev \
+            --region=${{ env.REGION }} --project=${{ env.GCP_PROJECT }} --format='value(status.url)')
+          WEBHOOK_SECRET=$(gcloud secrets versions access latest \
+            --secret=monitoring-alert-receiver-webhook-secret-secret-dev \
+            --project=${{ env.GCP_PROJECT }})
+          echo "INCIDENT_LEDGER_URL=$INCIDENT_LEDGER_URL" >> "$GITHUB_OUTPUT"
+          echo "::add-mask::$WEBHOOK_SECRET"
+          echo "WEBHOOK_SECRET=$WEBHOOK_SECRET" >> "$GITHUB_OUTPUT"
+
       - name: Deploy to Cloud Run
         run: |
           gcloud run services update alert-receiver \
             --image=${{ env.IMAGE }}:${{ github.sha }} \
             --port=3000 \
             --region=${{ env.REGION }} \
-            --project=${{ env.GCP_PROJECT }}
+            --project=${{ env.GCP_PROJECT }} \
+            --set-env-vars="INCIDENT_LEDGER_URL=${{ steps.secrets.outputs.INCIDENT_LEDGER_URL }},WEBHOOK_SECRET=${{ steps.secrets.outputs.WEBHOOK_SECRET }}"
 
       - name: Verify deployment
         run: |
