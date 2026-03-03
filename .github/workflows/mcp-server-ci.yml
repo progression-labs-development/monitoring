@@ -45,6 +45,8 @@ jobs:
         working-directory: services/mcp-server
       - run: pnpm test
         working-directory: services/mcp-server
+      - run: pnpm test:integration
+        working-directory: services/mcp-server
 
   docker-build:
     name: Docker Build
