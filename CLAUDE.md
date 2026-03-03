@@ -27,7 +27,7 @@ docs/
 
 ## Standards & Guidelines
 
-This project uses [@standards-kit/conform](https://github.com/progression-labs-development/standards-kit) for coding standards.
+This project uses [@progression-labs-development/conform](https://github.com/progression-labs-development/standards-kit) for coding standards.
 
 - **Config:** `standards.toml` (extends `typescript-internal` from the standards registry)
 - **Guidelines:** https://progression-labs-development.github.io/standards/
