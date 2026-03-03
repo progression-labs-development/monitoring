@@ -73,5 +73,5 @@ jobs:
       - name: Run conform checks
         working-directory: infra/pulumi
         run: |
-          npx @progression-labs-development/conform audit
-          npx @progression-labs-development/conform check
+          npx @standards-kit/conform audit
+          npx @standards-kit/conform check
