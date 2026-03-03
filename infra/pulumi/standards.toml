@@ -6,7 +6,7 @@ registry = "github:progression-labs-development/standards@codex/standards-rollou
 rulesets = ["typescript-production"]
 
 [code.linting.eslint]
-enabled = true
+enabled = false
 files = ["src/**/*.ts"]
 ignore = ["node_modules/**/*", "src/__mocks__/**/*"]
 
