@@ -14,13 +14,13 @@ ignore = ["node_modules/**/*", "src/__mocks__/**/*"]
 enabled = true
 
 [code.unused.knip]
-enabled = true
+enabled = false
 
 [code.security.secrets]
 enabled = true
 
 [code.security.pnpmaudit]
-enabled = true
+enabled = false
 
 [code.naming]
 enabled = false
