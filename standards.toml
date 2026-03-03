@@ -17,6 +17,10 @@ rules = [
 [code.coverage_run]
 enabled = false          # Coverage runs at service level
 
+# Enforce network blocking in unit tests (requires conform >= 0.11.0)
+# [code.testing]
+# no_network = true
+
 [process.ci]
 enabled = true
 
