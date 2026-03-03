@@ -14,5 +14,18 @@ rules = [
   { extensions = ["ts"], file_case = "camelCase", folder_case = "kebab-case", exclude = ["**/tests/__mocks__/**"] },
 ]
 
+[code.coverage_run]
+enabled = false          # Coverage runs at service level
+
 [process.ci]
 enabled = true
+
+[process.hooks]
+enabled = true
+
+[process.docs]
+enabled = true
+allowlist = ["README.md", "CLAUDE.md"]
+
+[process.codeowners]
+enabled = false          # TODO: define ownership rules
