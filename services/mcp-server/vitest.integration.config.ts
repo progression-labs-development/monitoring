@@ -4,9 +4,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "node",
-    setupFiles: ["../../vitest.setup.no-network.ts"],
-    include: ["src/**/*.test.ts"],
-    exclude: ["src/transport.test.ts"],
+    include: ["src/transport.test.ts"],
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html"],
