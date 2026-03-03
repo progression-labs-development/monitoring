@@ -27,9 +27,9 @@ importers:
       '@eslint/js':
         specifier: ^9.39.2
         version: 9.39.2
-      '@standards-kit/conform':
-        specifier: ^0.3.2
-        version: 0.3.2
+      '@progression-labs-development/conform':
+        specifier: ^0.8.0
+        version: 0.8.0
       '@types/node':
         specifier: ^20.19.33
         version: 20.19.33
@@ -582,8 +582,8 @@ packages:
     resolution: {integrity: sha512-XGSsWDweP80Fks16lwkAUIr54ICyBs6PsI4mpfTLQaWgEJRtY9xEV+PeyDpJ+sJEGZxqINlpmAwe/6tS1pP8Ng==}
     engines: {node: '>=10.3.0'}
 
-  '@modelcontextprotocol/sdk@1.26.0':
-    resolution: {integrity: sha512-Y5RmPncpiDtTXDbLKswIJzTqu2hyBKxTNsgKqKclDbhIgg1wgtf1fRuvxgTnRfcnxtvvgbIEcqUOzZrJ6iSReg==}
+  '@modelcontextprotocol/sdk@1.27.1':
+    resolution: {integrity: sha512-sr6GbP+4edBwFndLbM60gf07z0FQ79gaExpnsjMGePXqFcSSb7t6iscpjk9DhFhwd+mTEQrzNafGP8/iGGFYaA==}
     engines: {node: '>=18'}
     peerDependencies:
       '@cfworker/json-schema': ^4.1.1
@@ -741,6 +741,11 @@ packages:
   '@pkgjs/parseargs@0.11.0':
     resolution: {integrity: sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==}
     engines: {node: '>=14'}
+
+  '@progression-labs-development/conform@0.8.0':
+    resolution: {integrity: sha512-uwYQT4NDiBSJGJXBy9SN18dhKfCtva3ywRKYeuLCpe9ma0rLVBxpM0pUymKP/xYXd+ni42B0BKnh26DdctZu2A==, tarball: https://europe-west2-npm.pkg.dev/christopher-little-dev/npm-packages/@progression-labs-development/conform/-/@progression-labs-development/conform-0.8.0.tgz}
+    engines: {node: '>=22'}
+    hasBin: true
 
   '@progression-labs-development/infra@0.0.3':
     resolution: {integrity: sha512-e42+msfj872c0wpwbJUj9aKo/qto1lnZrDRcHcuTqq7D7QCSuapkCB3usRc3BSPTUpqkrGLMSEm16mnDFz8zoQ==, tarball: https://europe-west2-npm.pkg.dev/christopher-little-dev/npm-packages/@progression-labs-development/infra/-/@progression-labs-development/infra-0.0.3.tgz}
@@ -1181,11 +1186,6 @@ packages:
     resolution: {integrity: sha512-4aUIteuyxtBUhVdiQqcDhKFitwfd9hqoSDYY2KRXiWtgoWJ9Bmise+KfEPDiVHWeJepvF8xJO9/9+WDIciMFFw==}
     engines: {node: '>=18.0.0'}
 
-  '@standards-kit/conform@0.3.2':
-    resolution: {integrity: sha512-6qcIwaaDEcnVoZppbHS8+E0ETB0uzJv8V/AfJ9nlMFToB7KUGDrBIz7B9hMjA6U08qHgWCQBs9nZEcR6X4i8hg==}
-    engines: {node: '>=22'}
-    hasBin: true
-
   '@szmarczak/http-timer@4.0.6':
     resolution: {integrity: sha512-4BAffykYOgO+5nzBWYwE3W90sBgLJoUPRWWcL8wlyiM8IB8ipJz3UMJ9KXQd1RKQXpKp8Tutn80HZtWsu2u76w==}
     engines: {node: '>=10'}
@@ -1474,6 +1474,10 @@ packages:
   balanced-match@1.0.2:
     resolution: {integrity: sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==}
 
+  balanced-match@4.0.4:
+    resolution: {integrity: sha512-BLrgEcRTwX2o6gGxGOCNyMvGSp35YofuYzw9h1IMTRmKqttAZZVU67bdb9Pr2vUHA8+j3i2tJfjO6C6+4myGTA==}
+    engines: {node: 18 || 20 || >=22}
+
   base64-js@1.5.1:
     resolution: {integrity: sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA==}
 
@@ -1496,6 +1500,10 @@ packages:
 
   brace-expansion@2.0.2:
     resolution: {integrity: sha512-Jt0vHyM+jmUBqojB7E1NIYadt0vI0Qxjxd2TErW94wDz+E2LAm5vKMXXwg6ZZBTHPuUlDgQHKXvjGBdfcF1ZDQ==}
+
+  brace-expansion@5.0.4:
+    resolution: {integrity: sha512-h+DEnpVvxmfVefa4jFbCf5HdH5YMDXRsmKflpf1pILZWRFlTbJpxeU55nJl4Smt5HQaGzg1o6RHFPJaOqnmBDg==}
+    engines: {node: 18 || 20 || >=22}
 
   buffer-equal-constant-time@1.0.1:
     resolution: {integrity: sha512-zRpUiDwd/xk6ADqPMATG8vc9VPrkck7T07OIx0gnjmJAnHnTVXNQG3vfvWNuiZIkwu9KrKdA1iJKfsfTVxE6NA==}
@@ -2542,6 +2550,10 @@ packages:
   minimatch@10.1.2:
     resolution: {integrity: sha512-fu656aJ0n2kcXwsnwnv9g24tkU5uSmOlTjd6WyyaKm2Z+h1qmY6bAjrcaIxF/BslFqbZ8UBtbJi7KgQOZD2PTw==}
     engines: {node: 20 || >=22}
+
+  minimatch@10.2.4:
+    resolution: {integrity: sha512-oRjTw/97aTBN0RHbYCdtF1MQfvusSIBQM0IZEgzl6426+8jSC0nF1a/GmnVLpfB9yyr6g6FTqWqiZVbxrtaCIg==}
+    engines: {node: 18 || 20 || >=22}
 
   minimatch@3.1.2:
     resolution: {integrity: sha512-J7p63hRiAjw1NDEww1W7i37+ByIrOWO5XQQAzZ3VOcL0PNybwpfmV/N05zFAzwQ9USyEcX6t3UO+K5aqBQOIHw==}
@@ -4818,7 +4830,7 @@ snapshots:
 
   '@logdna/tail-file@2.2.0': {}
 
-  '@modelcontextprotocol/sdk@1.26.0(zod@4.3.6)':
+  '@modelcontextprotocol/sdk@1.27.1(zod@4.3.6)':
     dependencies:
       '@hono/node-server': 1.19.9(hono@4.11.9)
       ajv: 8.17.1
@@ -5067,6 +5079,40 @@ snapshots:
 
   '@pkgjs/parseargs@0.11.0':
     optional: true
+
+  '@progression-labs-development/conform@0.8.0':
+    dependencies:
+      '@aws-sdk/client-cloudwatch-logs': 3.988.0
+      '@aws-sdk/client-dynamodb': 3.988.0
+      '@aws-sdk/client-ec2': 3.988.0
+      '@aws-sdk/client-ecs': 3.988.0
+      '@aws-sdk/client-elastic-load-balancing-v2': 3.988.0
+      '@aws-sdk/client-elasticache': 3.988.0
+      '@aws-sdk/client-iam': 3.988.0
+      '@aws-sdk/client-lambda': 3.988.0
+      '@aws-sdk/client-rds': 3.988.0
+      '@aws-sdk/client-s3': 3.988.0
+      '@aws-sdk/client-secrets-manager': 3.988.0
+      '@aws-sdk/client-sns': 3.988.0
+      '@aws-sdk/client-sqs': 3.988.0
+      '@google-cloud/artifact-registry': 4.7.0
+      '@google-cloud/run': 3.2.0
+      '@google-cloud/secret-manager': 6.1.1
+      '@iarna/toml': 2.2.5
+      '@modelcontextprotocol/sdk': 1.27.1(zod@4.3.6)
+      chalk: 5.6.2
+      commander: 14.0.3
+      execa: 9.6.1
+      glob: 13.0.2
+      google-auth-library: 10.5.0
+      gray-matter: 4.0.3
+      js-yaml: 4.1.1
+      minimatch: 10.2.4
+      zod: 4.3.6
+    transitivePeerDependencies:
+      - '@cfworker/json-schema'
+      - aws-crt
+      - supports-color
 
   '@progression-labs-development/infra@0.0.3(typescript@5.9.3)':
     dependencies:
@@ -5635,40 +5681,6 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
-  '@standards-kit/conform@0.3.2':
-    dependencies:
-      '@aws-sdk/client-cloudwatch-logs': 3.988.0
-      '@aws-sdk/client-dynamodb': 3.988.0
-      '@aws-sdk/client-ec2': 3.988.0
-      '@aws-sdk/client-ecs': 3.988.0
-      '@aws-sdk/client-elastic-load-balancing-v2': 3.988.0
-      '@aws-sdk/client-elasticache': 3.988.0
-      '@aws-sdk/client-iam': 3.988.0
-      '@aws-sdk/client-lambda': 3.988.0
-      '@aws-sdk/client-rds': 3.988.0
-      '@aws-sdk/client-s3': 3.988.0
-      '@aws-sdk/client-secrets-manager': 3.988.0
-      '@aws-sdk/client-sns': 3.988.0
-      '@aws-sdk/client-sqs': 3.988.0
-      '@google-cloud/artifact-registry': 4.7.0
-      '@google-cloud/run': 3.2.0
-      '@google-cloud/secret-manager': 6.1.1
-      '@iarna/toml': 2.2.5
-      '@modelcontextprotocol/sdk': 1.26.0(zod@4.3.6)
-      chalk: 5.6.2
-      commander: 14.0.3
-      execa: 9.6.1
-      glob: 13.0.2
-      google-auth-library: 10.5.0
-      gray-matter: 4.0.3
-      js-yaml: 4.1.1
-      minimatch: 10.1.2
-      zod: 4.3.6
-    transitivePeerDependencies:
-      - '@cfworker/json-schema'
-      - aws-crt
-      - supports-color
-
   '@szmarczak/http-timer@4.0.6':
     dependencies:
       defer-to-connect: 2.0.1
@@ -6031,6 +6043,8 @@ snapshots:
 
   balanced-match@1.0.2: {}
 
+  balanced-match@4.0.4: {}
+
   base64-js@1.5.1: {}
 
   bignumber.js@9.3.1: {}
@@ -6067,6 +6081,10 @@ snapshots:
   brace-expansion@2.0.2:
     dependencies:
       balanced-match: 1.0.2
+
+  brace-expansion@5.0.4:
+    dependencies:
+      balanced-match: 4.0.4
 
   buffer-equal-constant-time@1.0.1: {}
 
@@ -7270,6 +7288,10 @@ snapshots:
   minimatch@10.1.2:
     dependencies:
       '@isaacs/brace-expansion': 5.0.1
+
+  minimatch@10.2.4:
+    dependencies:
+      brace-expansion: 5.0.4
 
   minimatch@3.1.2:
     dependencies:
