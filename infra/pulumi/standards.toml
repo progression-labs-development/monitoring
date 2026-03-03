@@ -1,11 +1,12 @@
-# check.toml - Configuration for @progression-labs-development/conform
-# Monitoring infrastructure (Pulumi)
+[metadata]
+tier = "production"
 
 [extends]
 registry = "github:progression-labs-development/standards"
-rulesets = ["typescript-internal"]
+rulesets = ["typescript-production"]
 
 [code.linting.eslint]
+enabled = true
 files = ["src/**/*.ts"]
 ignore = ["node_modules/**/*", "src/__mocks__/**/*"]
 
@@ -22,4 +23,10 @@ enabled = true
 enabled = true
 
 [code.naming]
+enabled = false
+
+[process.ci]
+enabled = false
+
+[process.repo]
 enabled = false

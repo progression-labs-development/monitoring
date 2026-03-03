@@ -1,0 +1,27 @@
+[metadata]
+tier = "production"
+
+[extends]
+registry = "github:progression-labs-development/standards"
+rulesets = ["typescript-production"]
+
+[code.linting.eslint]
+enabled = false
+
+[code.types.tsc]
+enabled = true
+
+[code.unused.knip]
+enabled = false
+
+[code.security.secrets]
+enabled = true
+
+[code.security.pnpmaudit]
+enabled = false
+
+[process.ci]
+enabled = false
+
+[process.repo]
+enabled = false
