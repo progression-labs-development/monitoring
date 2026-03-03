@@ -15,6 +15,7 @@ permissions:
 env:
   GCP_PROJECT: christopher-little-dev
   REGION: europe-west2
+  ARTIFACT_REPOSITORY: incident-ledger
   IMAGE: europe-west2-docker.pkg.dev/christopher-little-dev/incident-ledger/app
 
 jobs:
@@ -30,6 +31,17 @@ jobs:
           service_account: github-actions-pulumi@christopher-little-dev.iam.gserviceaccount.com
 
       - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Ensure Artifact Registry repository exists
+        run: |
+          gcloud artifacts repositories describe "${{ env.ARTIFACT_REPOSITORY }}" \
+            --location="${{ env.REGION }}" \
+            --project="${{ env.GCP_PROJECT }}" >/dev/null 2>&1 || \
+          gcloud artifacts repositories create "${{ env.ARTIFACT_REPOSITORY }}" \
+            --repository-format=docker \
+            --location="${{ env.REGION }}" \
+            --description="Docker images for ${{ env.ARTIFACT_REPOSITORY }}" \
+            --project="${{ env.GCP_PROJECT }}"
 
       - name: Configure Docker for Artifact Registry
         run: gcloud auth configure-docker europe-west2-docker.pkg.dev --quiet
