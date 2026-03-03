@@ -15,7 +15,9 @@ async function main() {
   console.log(`Incident ledger listening on :${port}`);
   serve({ fetch: app.fetch, port });
 
-  void initializeDatabase();
+  void initializeDatabase().catch((err) => {
+    console.error("Database initialization failed:", err);
+  });
 }
 
 async function initializeDatabase(): Promise<void> {
