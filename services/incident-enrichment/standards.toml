@@ -2,7 +2,7 @@
 tier = "production"
 
 [extends]
-registry = "github:progression-labs-development/standards"
+registry = "github:progression-labs-development/standards@codex/standards-rollout"
 rulesets = ["typescript-production"]
 
 [code.linting.eslint]
