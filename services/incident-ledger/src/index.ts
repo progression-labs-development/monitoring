@@ -11,13 +11,17 @@ app.route("/", health);
 app.route("/", incidents);
 
 async function main() {
-  const pool = await getPool();
-  await runMigrations(pool);
-  console.log("Migrations complete");
-
   const port = Number(process.env.PORT || 3000);
   console.log(`Incident ledger listening on :${port}`);
   serve({ fetch: app.fetch, port });
+
+  void initializeDatabase();
+}
+
+async function initializeDatabase(): Promise<void> {
+  const pool = await getPool();
+  await runMigrations(pool);
+  console.log("Migrations complete");
 }
 
 // Graceful shutdown
