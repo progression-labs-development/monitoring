@@ -197,6 +197,7 @@ export function createSignoz(name: string, options: SignozOptions): SignozOutput
       { port: 8080, description: "SigNoz UI" },
       { port: 4317, description: "OTLP gRPC receiver" },
       { port: 4318, description: "OTLP HTTP receiver" },
+      { port: 8123, description: "ClickHouse HTTP" },
     ],
     userData: userData as unknown as string,
   });
