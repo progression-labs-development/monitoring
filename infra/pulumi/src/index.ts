@@ -33,11 +33,17 @@ const signozAdminPassword = new random.RandomPassword("signoz-admin-password", {
   overrideSpecial: "!@#%&*",  // No $ - it breaks bash variable expansion in user data script
 });
 
+const clickhousePassword = new random.RandomPassword("clickhouse-password", {
+  length: 32,
+  special: false,  // No special chars — used in XML config and connection strings
+});
+
 const signoz = createSignoz("signoz", {
-  size: "medium",  // e2-small has only 2GB - not enough for SigNoz
+  size: "large",  // e2-medium (4GB) OOMs under load — need e2-standard-4 (16GB)
   sshKey: config.get("sshPublicKey"),
   adminEmail: signozAdminEmail,
   adminPassword: signozAdminPassword.result,
+  clickhousePassword: clickhousePassword.result,
 });
 
 // =============================================================================
@@ -90,6 +96,10 @@ const adminSecret = createSecret("signoz-admin-credentials", {
   value: pulumi.interpolate`{"email":"${signozAdminEmail}","password":"${signozAdminPassword.result}","url":"${signoz.url}"}` as unknown as string,
 });
 
+const clickhouseSecret = createSecret("signoz-clickhouse-credentials", {
+  value: pulumi.interpolate`{"host":"${signoz.publicIp}","port":8123,"username":"default","password":"${clickhousePassword.result}"}` as unknown as string,
+});
+
 // =============================================================================
 // Exports
 // =============================================================================
@@ -103,6 +113,8 @@ export const signozOtlpHttp = signoz.otlpHttpEndpoint;
 export const signozOtlpGrpc = signoz.otlpGrpcEndpoint;
 export const signozInstanceId = signoz.instanceId;
 export const signozPublicIp = signoz.publicIp;
+export const clickhouseSecretName = clickhouseSecret.secretName;
+export const clickhouseSecretArn = clickhouseSecret.secretArn;
 
 export const incidentLedgerUrl = incidentLedger.container.url;
 export const incidentLedgerDbEndpoint = incidentLedger.db.endpoint;

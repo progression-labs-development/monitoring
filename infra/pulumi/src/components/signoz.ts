@@ -26,6 +26,11 @@ export interface SignozOptions {
    * Admin password for initial registration
    */
   adminPassword: pulumi.Input<string>;
+
+  /**
+   * ClickHouse password for the default user
+   */
+  clickhousePassword: pulumi.Input<string>;
 }
 
 export interface SignozOutputs {
@@ -86,13 +91,39 @@ cd /opt/signoz
 git clone -b main https://github.com/SigNoz/signoz.git .
 cd deploy
 
-# Create override file for resource limits (optimized for e2-medium - 4GB RAM)
+# Create ClickHouse users override to set password on default user
+mkdir -p clickhouse-users
+cat > clickhouse-users/users.xml << 'USERS_XML'
+<clickhouse>
+  <users>
+    <default>
+      <password from_env="CLICKHOUSE_PASSWORD" />
+    </default>
+  </users>
+</clickhouse>
+USERS_XML
+
+# Create override file for resource limits (optimized for e2-standard-4 - 16GB RAM)
 # Note: SigNoz v0.108+ uses combined "signoz" service (UI+query) on port 8080
-cat > docker-compose.override.yml << 'OVERRIDE'
+cat > docker-compose.override.yml << OVERRIDE
 services:
   clickhouse:
     ports:
       - "8123:8123"
+    environment:
+      CLICKHOUSE_PASSWORD: $CLICKHOUSE_PASSWORD
+    volumes:
+      - ./clickhouse-users/users.xml:/etc/clickhouse-server/users.d/auth.xml:ro
+    deploy:
+      resources:
+        limits:
+          memory: 8G
+        reservations:
+          memory: 4G
+
+  signoz:
+    environment:
+      SIGNOZ_CLICKHOUSE_PASSWORD: $CLICKHOUSE_PASSWORD
     deploy:
       resources:
         limits:
@@ -100,21 +131,15 @@ services:
         reservations:
           memory: 1G
 
-  signoz:
-    deploy:
-      resources:
-        limits:
-          memory: 384M
-        reservations:
-          memory: 256M
-
   otel-collector:
+    environment:
+      CLICKHOUSE_PASSWORD: $CLICKHOUSE_PASSWORD
     deploy:
       resources:
         limits:
-          memory: 256M
+          memory: 1G
         reservations:
-          memory: 128M
+          memory: 512M
 OVERRIDE
 
 # Start SigNoz
@@ -167,7 +192,11 @@ echo "Registration response: $REGISTER_RESPONSE"
 
 echo "SigNoz installation completed at $(date)"`;
 
-function buildSignozUserData(adminEmail: string, adminPassword: pulumi.Input<string>): pulumi.Output<string> {
+function buildSignozUserData(
+  adminEmail: string,
+  adminPassword: pulumi.Input<string>,
+  clickhousePassword: pulumi.Input<string>,
+): pulumi.Output<string> {
   return pulumi.interpolate`#!/bin/bash
 set -e
 
@@ -175,9 +204,11 @@ set -e
 exec > >(tee /var/log/user-data.log) 2>&1
 echo "Starting SigNoz installation at $(date)"
 
-# Admin credentials (set by Pulumi)
+# Credentials (set by Pulumi)
 SIGNOZ_ADMIN_EMAIL="${adminEmail}"
 SIGNOZ_ADMIN_PASSWORD="${adminPassword}"
+CLICKHOUSE_PASSWORD="${clickhousePassword}"
+export CLICKHOUSE_PASSWORD
 ${INSTALL_DOCKER}
 ${SETUP_SIGNOZ}
 ${AUTOSTART_AND_REGISTER}
@@ -186,7 +217,7 @@ ${AUTOSTART_AND_REGISTER}
 
 export function createSignoz(name: string, options: SignozOptions): SignozOutputs {
   const adminEmail = options.adminEmail || "admin@monitoring.local";
-  const userData = buildSignozUserData(adminEmail, options.adminPassword);
+  const userData = buildSignozUserData(adminEmail, options.adminPassword, options.clickhousePassword);
 
   const instance = createInstance(name, {
     size: options.size || "medium",
