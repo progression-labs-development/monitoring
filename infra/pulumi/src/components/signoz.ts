@@ -91,6 +91,8 @@ cd deploy
 cat > docker-compose.override.yml << 'OVERRIDE'
 services:
   clickhouse:
+    ports:
+      - "8123:8123"
     deploy:
       resources:
         limits:
